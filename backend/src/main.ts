@@ -1,11 +1,15 @@
 import express from "express";
-const app = express();
-const port = 3000;
+import { initDb, closeDb } from "./db-setup.js";
+import { adminRoutes } from "./routes/admin/admin-routes.js";
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+const app = express();
+const port = 8080;
+
+initDb();
+
+app.use(express.json());
+app.use("/admin", adminRoutes);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+    console.log(`Listening on port ${port}`);
 });
