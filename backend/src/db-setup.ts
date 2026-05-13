@@ -2,26 +2,18 @@ import db from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 
-// TODO: what is the best way to pass this directory as a config?
-const directory =
-    "/Users/dianacarbajal/Projects/table-booking-js/backend/database";
 let database: db.Database | null = null;
 
 export function initDb(): db.Database {
-    const dbPath = path.join(directory, "database.db");
-
     try {
-        database = new db(dbPath);
-        // TODO: what is this?
+        database = new db("./database.db");
         database.pragma("journal_mode = WAL");
         database.pragma("synchronous = normal");
 
-        const schemaPath = path.join(directory, "schema.sql");
-        const schema = fs.readFileSync(schemaPath, "utf-8");
+        const schema = fs.readFileSync("./database/schema.sql", "utf-8");
         database.exec(schema);
 
-        // TODO: the number should be passed as a config? where?
-        createSettings(120);
+        createSettings(database);
 
         console.log("Schema applied to fresh database.");
         return database;
@@ -48,10 +40,9 @@ export function closeDb(): void {
     }
 }
 
-function createSettings(bookingDuration: number) {
-    const db = getDb();
+function createSettings(db: db.Database): void {
     const stmt = db.prepare(
         "INSERT INTO settings (booking_duration) VALUES (?)",
     );
-    stmt.run(bookingDuration);
+    stmt.run(120);
 }
