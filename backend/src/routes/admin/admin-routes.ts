@@ -1,5 +1,5 @@
 import express from "express";
-import { settingsRoutes } from "./settings-routes.js";
+import { settingsRoutes } from "../../core/settings/settings.routes.js";
 
 export const adminRoutes = express.Router();
 
