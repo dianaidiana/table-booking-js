@@ -1,5 +1,10 @@
 import { getDb } from "../../db-setup.js";
-import type { PartialWithUndefined } from "../../utils.js";
+import type {
+    Assert,
+    Equal,
+    EqualPropertyNames,
+    PartialWithUndefined,
+} from "../../utils.js";
 
 export interface Settings {
     booking_duration: number;
@@ -12,19 +17,27 @@ export async function dbUpdateSettings({
 }: PartialSettings): Promise<Settings> {
     const db = getDb();
 
-    if (booking_duration) {
-        const stmt = db.prepare<[number], Settings>(
-            "UPDATE settings SET booking_duration = ? RETURNING booking_duration",
-        );
-        const updatedSettings = stmt.get(booking_duration);
-        if (!updatedSettings) {
-            throw new Error("Failed to update settings");
-        }
+    const obj = { booking_duration };
+    type Check = Assert<EqualPropertyNames<typeof obj, PartialSettings>>;
 
-        return updatedSettings;
+    const setExprs = ["id = id"];
+    const values = [];
+    for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+            setExprs.push(`${key} = ?`);
+            values.push(value);
+        }
     }
 
-    return await dbGetSettings();
+    const stmt = db.prepare<any[], Settings>(
+        `UPDATE settings SET ${setExprs.join(", ")} RETURNING booking_duration`,
+    );
+    const updatedSettings = stmt.get(...values);
+    if (!updatedSettings) {
+        throw new Error("Failed to update settings");
+    }
+
+    return updatedSettings;
 }
 
 export async function dbGetSettings(): Promise<Settings> {

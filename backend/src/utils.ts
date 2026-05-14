@@ -8,3 +8,9 @@ export type Equal<A, B> =
         : false;
 
 export type Assert<T extends true> = T;
+
+export type EqualPropertyNames<A, B> = [keyof A] extends [keyof B]
+    ? [keyof B] extends [keyof A]
+        ? true
+        : false
+    : false;
