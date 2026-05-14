@@ -29,7 +29,7 @@ export async function dbUpdateSettings({
         }
     }
 
-    const stmt = db.prepare<any[], Settings>(
+    const stmt = db.prepare<unknown[], Settings>(
         `UPDATE settings SET ${setExprs.join(", ")} RETURNING booking_duration`,
     );
     const updatedSettings = stmt.get(...values);
