@@ -1,5 +1,18 @@
 import express from "express";
 import { getSettings, updateSettings } from "./settings.service.js";
+import z from "zod";
+import type { PartialSettings } from "./settings.dba.js";
+import type { Assert, Equal } from "../../utils.js";
+
+const updateSettingsBodySchema = z
+    .object({
+        booking_duration: z.number().positive().optional(),
+    })
+    .strict();
+
+type Check = Assert<
+    Equal<z.infer<typeof updateSettingsBodySchema>, PartialSettings>
+>;
 
 export async function getSettingsController(
     req: express.Request,
@@ -13,14 +26,7 @@ export async function updateSettingsController(
     req: express.Request,
     res: express.Response,
 ) {
-    const { booking_duration }: { booking_duration: unknown } = req.body;
+    const partialSettings = updateSettingsBodySchema.parse(req.body);
 
-    if (booking_duration !== undefined) {
-        if (typeof booking_duration !== "number" || booking_duration <= 0) {
-            res.status(400).json({ error: "Invalid booking duration" });
-            return;
-        }
-    }
-
-    res.status(200).json(await updateSettings({ booking_duration }));
+    res.status(200).json(await updateSettings(partialSettings));
 }
