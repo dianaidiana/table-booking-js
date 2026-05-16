@@ -38,7 +38,9 @@ export async function dbGetTable(id: number): Promise<Table | undefined> {
     }
 }
 
-export async function dbCreateTable(obj: CreateTableDb): Promise<Table> {
+export async function dbCreateTable(
+    createTable: CreateTableDb,
+): Promise<Table> {
     const db = getDb();
 
     const stmt = db.prepare<CreateTableDb, TableDb>(
@@ -47,7 +49,7 @@ export async function dbCreateTable(obj: CreateTableDb): Promise<Table> {
          RETURNING *`,
     );
 
-    const table = stmt.get(obj);
+    const table = stmt.get(createTable);
 
     if (!table) {
         throw new Error("Failed to create table");
@@ -58,13 +60,13 @@ export async function dbCreateTable(obj: CreateTableDb): Promise<Table> {
 
 export async function dbUpdateTable(
     id: number,
-    obj: UpdateTableDb,
+    updateTable: UpdateTableDb,
 ): Promise<Table> {
     const db = getDb();
 
     const setExprs = ["id = id"];
     const values = [];
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(updateTable)) {
         if (value !== undefined) {
             setExprs.push(`${key} = ?`);
             values.push(value);

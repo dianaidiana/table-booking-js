@@ -6,7 +6,7 @@ import {
     listTables,
     updateTable,
 } from "./tables.service.js";
-import z, { maxLength } from "zod";
+import z from "zod";
 import type { CreateTableDb } from "./tables.dba.js";
 import type { Assert, Equal } from "../../utils.js";
 
