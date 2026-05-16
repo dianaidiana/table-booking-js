@@ -12,5 +12,5 @@ export const tableGroupsRoutes = Router();
 tableGroupsRoutes.get("/", listTableGroupsController);
 tableGroupsRoutes.get("/:id", getTableGroupController);
 tableGroupsRoutes.post("/", createTableGroupController);
-tableGroupsRoutes.patch("/", updateTableGroupController);
+tableGroupsRoutes.patch("/:id", updateTableGroupController);
 tableGroupsRoutes.delete("/:id", deleteTableGroupController);

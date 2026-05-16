@@ -25,10 +25,11 @@ export async function createTableGroup({
     return await dbCreateTableGroup({ name });
 }
 
-export async function updateTableGroup({
-    name,
-}: UpdateTableGroup): Promise<TableGroup> {
-    return await dbUpdateTableGroup({ name });
+export async function updateTableGroup(
+    id: number,
+    { name }: UpdateTableGroup,
+): Promise<TableGroup> {
+    return await dbUpdateTableGroup(id, { name });
 }
 
 export async function deleteTableGroup(id: number): Promise<boolean> {

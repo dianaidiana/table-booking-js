@@ -56,9 +56,10 @@ export async function dbCreateTableGroup({
     return tableGroup;
 }
 
-export async function dbUpdateTableGroup({
-    name,
-}: UpdateTableGroup): Promise<TableGroup> {
+export async function dbUpdateTableGroup(
+    id: number,
+    { name }: UpdateTableGroup,
+): Promise<TableGroup> {
     const db = getDb();
 
     const obj = { name };
@@ -74,9 +75,9 @@ export async function dbUpdateTableGroup({
     }
 
     const stmt = db.prepare<unknown[], TableGroup>(
-        `UPDATE table_groups SET ${setExprs.join(", ")} RETURNING *`,
+        `UPDATE table_groups SET ${setExprs.join(", ")} WHERE id = ? RETURNING *`,
     );
-    const updatedTableGroup = stmt.get(...values);
+    const updatedTableGroup = stmt.get(...values, id);
     if (!updatedTableGroup) {
         throw new Error("Failed to update table group");
     }

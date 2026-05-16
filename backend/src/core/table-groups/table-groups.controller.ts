@@ -60,14 +60,19 @@ export async function createTableGroupController(
 }
 
 const updateTableGroupBodySchema = createTableGroupBodySchema.partial();
+const updateTableGroupParamsSchema = z
+    .object({
+        id: z.coerce.number(),
+    })
+    .strict();
 
 export async function updateTableGroupController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = updateTableGroupBodySchema.parse(req.body);
-
-    const tableGroup = await updateTableGroup(body);
+    const { id } = updateTableGroupParamsSchema.parse(req.params);
+    const tableGroup = await updateTableGroup(id, body);
 
     res.status(200).json(tableGroup);
 }
