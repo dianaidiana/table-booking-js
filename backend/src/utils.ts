@@ -14,3 +14,7 @@ export type EqualPropertyNames<A, B> = [keyof A] extends [keyof B]
         ? true
         : false
     : false;
+
+export type ToDb<T> = {
+    [K in keyof T]: T[K] extends boolean ? number : T[K];
+};

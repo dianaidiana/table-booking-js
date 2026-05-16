@@ -1,4 +1,5 @@
 import { getDb } from "../../db-setup.js";
+import type { PartialWithUndefined, ToDb } from "../../utils.js";
 
 export interface Table {
     id: number;
@@ -8,45 +9,82 @@ export interface Table {
     disabled: boolean;
 }
 
-export type CreateTable = Omit<Table, "id">;
+type TableDb = ToDb<Table>;
+export type CreateTableDb = Omit<TableDb, "id">;
+export type UpdateTableDb = PartialWithUndefined<CreateTableDb>;
+
+function castToTable(table: TableDb): Table {
+    return {
+        ...table,
+        disabled: Boolean(table.disabled),
+    };
+}
 
 export async function dbListTables(): Promise<Table[]> {
     const db = getDb();
-    const tables = db.prepare<[], Table>("SELECT * FROM tables").all();
+    const tables = db.prepare<[], TableDb>("SELECT * FROM tables").all();
 
-    return tables;
+    return tables.map((table) => castToTable(table));
 }
 
 export async function dbGetTable(id: number): Promise<Table | undefined> {
     const db = getDb();
     const table = db
-        .prepare<[number], Table>("SELECT * FROM tables WHERE id = ?")
+        .prepare<[number], TableDb>("SELECT * FROM tables WHERE id = ?")
         .get(id);
 
-    return table;
+    if (table) {
+        return castToTable(table);
+    }
 }
 
-export async function dbCreateTable(obj: CreateTable): Promise<Table> {
+export async function dbCreateTable(obj: CreateTableDb): Promise<Table> {
     const db = getDb();
 
-    // TODO: should I create a type for the new object type?
-    const stmt = db.prepare<any, Table>(
+    const stmt = db.prepare<CreateTableDb, TableDb>(
         `INSERT INTO tables (table_group_id, table_number, capacity, disabled) 
          VALUES (@table_group_id, @table_number, @capacity, @disabled) 
          RETURNING *`,
     );
 
-    const table = stmt.get({
-        ...obj,
-        disabled: obj.disabled ? 1 : 0,
-    });
+    const table = stmt.get(obj);
 
     if (!table) {
         throw new Error("Failed to create table");
     }
 
-    return {
-        ...table,
-        disabled: Boolean(table.disabled),
-    };
+    return castToTable(table);
+}
+
+export async function dbUpdateTable(
+    id: number,
+    obj: UpdateTableDb,
+): Promise<Table> {
+    const db = getDb();
+
+    const setExprs = ["id = id"];
+    const values = [];
+    for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+            setExprs.push(`${key} = ?`);
+            values.push(value);
+        }
+    }
+
+    const stmt = db.prepare<unknown[], TableDb>(
+        `UPDATE tables SET ${setExprs.join(", ")} WHERE id = ? RETURNING *`,
+    );
+    const table = stmt.get(...values, id);
+    if (!table) {
+        throw new Error("Failed to update table");
+    }
+
+    return castToTable(table);
+}
+
+export async function dbDeleteTable(id: number): Promise<boolean> {
+    const db = getDb();
+    const stmt = db.prepare<[number], void>("DELETE FROM tables WHERE id = ?");
+    const result = stmt.run(id);
+    return result.changes > 0;
 }
