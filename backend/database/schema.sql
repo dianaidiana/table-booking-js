@@ -18,12 +18,10 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL
 );
 CREATE TABLE IF NOT EXISTS opening_hours (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    weekday INTEGER NOT NULL, -- 0-6
+    weekday INTEGER PRIMARY KEY, -- 0-6, Sunday-Saturday
     opening_time VARCHAR(5) NOT NULL,
     closing_time VARCHAR(5) NOT NULL,
-    is_closed BOOLEAN NOT NULL,
-    UNIQUE(weekday)
+    is_closed BOOLEAN NOT NULL
 );
 CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
