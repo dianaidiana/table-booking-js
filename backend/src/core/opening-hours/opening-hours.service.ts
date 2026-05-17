@@ -3,7 +3,7 @@ import {
     dbListOpeningHours,
     dbUpdateOpeningHours,
     type OpeningHours,
-    type UpdateOpeningHoursDb,
+    type UpdateOpeningHours,
 } from "./opening-hours.dba.js";
 
 export async function listOpeningHours(): Promise<OpeningHours[]> {
@@ -18,7 +18,7 @@ export async function getOpeningHoursPerDay(
 
 export async function updateOpeningHours(
     weekday: number,
-    updateOpeningHours: UpdateOpeningHoursDb,
+    updateOpeningHours: UpdateOpeningHours,
 ): Promise<OpeningHours> {
     // # get upcoming bookings
     // upcoming_bookings = get_upcoming_bookings_by_weekday(weekday)

@@ -1,5 +1,10 @@
 import { getDb } from "../../db-setup.js";
-import type { PartialWithUndefined, ToDb } from "../../utils.js";
+import type {
+    Assert,
+    EqualPropertyNames,
+    PartialWithUndefined,
+    ToDb,
+} from "../../utils.js";
 
 export interface OpeningHours {
     weekday: number;
@@ -9,8 +14,8 @@ export interface OpeningHours {
 }
 
 type OpeningHoursDb = ToDb<OpeningHours>;
-export type UpdateOpeningHoursDb = PartialWithUndefined<
-    Omit<OpeningHoursDb, "weekday">
+export type UpdateOpeningHours = PartialWithUndefined<
+    Omit<OpeningHours, "weekday">
 >;
 
 function castToOpeningHours(openingHours: OpeningHoursDb): OpeningHours {
@@ -47,16 +52,19 @@ export async function dbGetOpeningHoursPerDay(
 
 export async function dbUpdateOpeningHours(
     weekday: number,
-    updateOpeningHours: UpdateOpeningHoursDb,
+    { opening_time, closing_time, is_closed }: UpdateOpeningHours,
 ): Promise<OpeningHours> {
     const db = getDb();
 
+    const obj = { opening_time, closing_time, is_closed };
+    type Check = Assert<EqualPropertyNames<typeof obj, UpdateOpeningHours>>;
+
     const setExprs = ["weekday = weekday"];
     const values = [];
-    for (const [key, value] of Object.entries(updateOpeningHours)) {
+    for (const [key, value] of Object.entries(obj)) {
         if (value !== undefined) {
             setExprs.push(`${key} = ?`);
-            values.push(value);
+            values.push(value === true ? 1 : value === false ? 0 : value);
         }
     }
 

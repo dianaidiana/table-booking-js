@@ -6,7 +6,7 @@ import {
 } from "./opening-hours.service.js";
 import z from "zod";
 import type { Assert, Equal } from "../../utils.js";
-import type { UpdateOpeningHoursDb } from "./opening-hours.dba.js";
+import type { UpdateOpeningHours } from "./opening-hours.dba.js";
 
 export async function listOpeningHoursController(
     req: express.Request,
@@ -40,7 +40,7 @@ const updateOpeningHoursBodySchema = z
     .object({
         opening_time: z.iso.time(),
         closing_time: z.iso.time(),
-        is_closed: z.boolean().transform((val) => Number(val)),
+        is_closed: z.boolean(),
     })
     .strict()
     .partial();
@@ -52,7 +52,7 @@ const updateOpeningHoursParamsSchema = z
     .strict();
 
 type Check = Assert<
-    Equal<z.infer<typeof updateOpeningHoursBodySchema>, UpdateOpeningHoursDb>
+    Equal<z.infer<typeof updateOpeningHoursBodySchema>, UpdateOpeningHours>
 >;
 
 export async function updateOpeningHoursController(
