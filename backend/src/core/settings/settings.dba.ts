@@ -1,17 +1,24 @@
 import { getDb } from "../../db-setup.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
-import type {
-    Assert,
-    Equal,
-    EqualPropertyNames,
-    PartialWithUndefined,
-} from "../../utils.ts";
+import type { PartialWithUndefined } from "../../utils.ts";
 
 export interface Settings {
     booking_duration: number;
 }
 
 export type PartialSettings = PartialWithUndefined<Settings>;
+
+export async function dbGetSettings(): Promise<Settings> {
+    const db = getDb();
+    const settings = db
+        .prepare<[], Settings>("SELECT booking_duration FROM settings")
+        .get();
+    if (!settings) {
+        throw new Error("Settings not found");
+    }
+
+    return settings;
+}
 
 export async function dbUpdateSettings({
     booking_duration,
@@ -28,16 +35,4 @@ export async function dbUpdateSettings({
             outColumns: ["booking_duration"],
         },
     );
-}
-
-export async function dbGetSettings(): Promise<Settings> {
-    const db = getDb();
-    const settings = db
-        .prepare<[], Settings>("SELECT booking_duration FROM settings")
-        .get();
-    if (!settings) {
-        throw new Error("Settings not found");
-    }
-
-    return settings;
 }
