@@ -4,9 +4,9 @@ import {
     dbGetTable,
     dbListTables,
     dbUpdateTable,
-    type CreateTableDb,
+    type CreateTable,
     type Table,
-    type UpdateTableDb,
+    type UpdateTable,
 } from "./tables.dba.ts";
 
 export async function listTables(): Promise<Table[]> {
@@ -17,15 +17,15 @@ export async function getTable(id: number): Promise<Table | undefined> {
     return await dbGetTable(id);
 }
 
-export async function createTable(createTable: CreateTableDb): Promise<Table> {
+export async function createTable(createTable: CreateTable): Promise<Table> {
     return await dbCreateTable(createTable);
 }
 
 export async function updateTable(
     id: number,
-    updateTable: UpdateTableDb,
+    updateTable: UpdateTable,
 ): Promise<Table> {
-    if (updateTable.disabled == 1) {
+    if (updateTable.disabled) {
         // conflictingBookings = await getUpcomingBookingsForTable(table_id)
         // if (conflictingBookings) {
         //  return ?

@@ -1,5 +1,7 @@
+import { ta } from "zod/locales";
 import { getDb } from "../../db-setup.ts";
 import type { PartialWithUndefined, ToDb } from "../../utils.ts";
+import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface Table {
     id: number;
@@ -10,13 +12,26 @@ export interface Table {
 }
 
 type TableDb = ToDb<Table>;
-export type CreateTableDb = Omit<TableDb, "id">;
-export type UpdateTableDb = PartialWithUndefined<CreateTableDb>;
 
-function castToTable(table: TableDb): Table {
+export type CreateTable = Omit<Table, "id">;
+type CreateTableDb = ToDb<CreateTable>;
+
+export type UpdateTable = PartialWithUndefined<CreateTable>;
+
+function castTableDbToTable(table: TableDb): Table {
     return {
         ...table,
         disabled: Boolean(table.disabled),
+    };
+}
+
+function castCreateTableToCreateTableDb(
+    createTable: CreateTable,
+): CreateTableDb {
+    const disabled = createTable.disabled;
+    return {
+        ...createTable,
+        disabled: disabled === true ? 1 : 0,
     };
 }
 
@@ -24,7 +39,7 @@ export async function dbListTables(): Promise<Table[]> {
     const db = getDb();
     const tables = db.prepare<[], TableDb>("SELECT * FROM tables").all();
 
-    return tables.map((table) => castToTable(table));
+    return tables.map((table) => castTableDbToTable(table));
 }
 
 export async function dbGetTable(id: number): Promise<Table | undefined> {
@@ -34,13 +49,11 @@ export async function dbGetTable(id: number): Promise<Table | undefined> {
         .get(id);
 
     if (table) {
-        return castToTable(table);
+        return castTableDbToTable(table);
     }
 }
 
-export async function dbCreateTable(
-    createTable: CreateTableDb,
-): Promise<Table> {
+export async function dbCreateTable(createTable: CreateTable): Promise<Table> {
     const db = getDb();
 
     const stmt = db.prepare<CreateTableDb, TableDb>(
@@ -49,39 +62,37 @@ export async function dbCreateTable(
          RETURNING *`,
     );
 
-    const table = stmt.get(createTable);
+    const table = stmt.get(castCreateTableToCreateTableDb(createTable));
 
     if (!table) {
         throw new Error("Failed to create table");
     }
 
-    return castToTable(table);
+    return castTableDbToTable(table);
 }
 
 export async function dbUpdateTable(
     id: number,
-    updateTable: UpdateTableDb,
+    { table_group_id, table_number, capacity, disabled }: UpdateTable,
 ): Promise<Table> {
     const db = getDb();
 
-    const setExprs = ["id = id"];
-    const values = [];
-    for (const [key, value] of Object.entries(updateTable)) {
-        if (value !== undefined) {
-            setExprs.push(`${key} = ?`);
-            values.push(value);
-        }
-    }
-
-    const stmt = db.prepare<unknown[], TableDb>(
-        `UPDATE tables SET ${setExprs.join(", ")} WHERE id = ? RETURNING *`,
+    const out = await dbPatchHelper<UpdateTable, TableDb>(
+        db,
+        id,
+        {
+            table_group_id,
+            table_number,
+            capacity,
+            disabled,
+        },
+        {
+            primaryKey: "id",
+            tableName: "tables",
+        },
     );
-    const table = stmt.get(...values, id);
-    if (!table) {
-        throw new Error("Failed to update table");
-    }
 
-    return castToTable(table);
+    return castTableDbToTable(out);
 }
 
 export async function dbDeleteTable(id: number): Promise<boolean> {

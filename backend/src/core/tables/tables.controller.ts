@@ -7,7 +7,7 @@ import {
     updateTable,
 } from "./tables.service.ts";
 import z from "zod";
-import type { CreateTableDb } from "./tables.dba.ts";
+import type { CreateTable } from "./tables.dba.ts";
 import type { Assert, Equal } from "../../utils.ts";
 
 export async function listTablesController(
@@ -43,13 +43,11 @@ const createTableBodySchema = z
         table_group_id: z.number().positive(),
         table_number: z.string().nonempty(),
         capacity: z.number().positive(),
-        disabled: z.boolean().transform((val) => Number(val)),
+        disabled: z.boolean(),
     })
     .strict();
 
-type Check = Assert<
-    Equal<z.infer<typeof createTableBodySchema>, CreateTableDb>
->;
+type Check = Assert<Equal<z.infer<typeof createTableBodySchema>, CreateTable>>;
 
 export async function createTableController(
     req: express.Request,

@@ -5,6 +5,7 @@ import type {
     EqualPropertyNames,
     PartialWithUndefined,
 } from "../../utils.ts";
+import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface TableGroup {
     id: number;
@@ -62,27 +63,15 @@ export async function dbUpdateTableGroup(
 ): Promise<TableGroup> {
     const db = getDb();
 
-    const obj = { name };
-    type Check = Assert<EqualPropertyNames<typeof obj, UpdateTableGroup>>;
-
-    const setExprs = ["id = id"];
-    const values = [];
-    for (const [key, value] of Object.entries(obj)) {
-        if (value !== undefined) {
-            setExprs.push(`${key} = ?`);
-            values.push(value);
-        }
-    }
-
-    const stmt = db.prepare<unknown[], TableGroup>(
-        `UPDATE table_groups SET ${setExprs.join(", ")} WHERE id = ? RETURNING *`,
+    return await dbPatchHelper<UpdateTableGroup, TableGroup>(
+        db,
+        id,
+        { name },
+        {
+            primaryKey: "id",
+            tableName: "table_groups",
+        },
     );
-    const updatedTableGroup = stmt.get(...values, id);
-    if (!updatedTableGroup) {
-        throw new Error("Failed to update table group");
-    }
-
-    return updatedTableGroup;
 }
 
 export async function dbDeleteTableGroup(id: number): Promise<boolean> {
