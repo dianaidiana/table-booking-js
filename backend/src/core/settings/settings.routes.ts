@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
     getSettingsController,
     updateSettingsController,
-} from "./settings.controller.js";
+} from "./settings.controller.ts";
 
 export const settingsRoutes = Router();
 

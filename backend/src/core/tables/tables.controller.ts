@@ -5,10 +5,10 @@ import {
     getTable,
     listTables,
     updateTable,
-} from "./tables.service.js";
+} from "./tables.service.ts";
 import z from "zod";
-import type { CreateTableDb } from "./tables.dba.js";
-import type { Assert, Equal } from "../../utils.js";
+import type { CreateTableDb } from "./tables.dba.ts";
+import type { Assert, Equal } from "../../utils.ts";
 
 export async function listTablesController(
     req: express.Request,

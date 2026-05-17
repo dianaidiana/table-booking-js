@@ -1,6 +1,6 @@
 import express from "express";
-import { initDb, closeDb } from "./db-setup.js";
-import { adminRoutes } from "./routes/admin/admin-routes.js";
+import { initDb, closeDb } from "./db-setup.ts";
+import { adminRoutes } from "./routes/admin/admin-routes.ts";
 import z from "zod";
 
 const app = express();

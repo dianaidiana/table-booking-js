@@ -1,5 +1,5 @@
 import express from "express";
-import { type CreateTableGroup } from "./table-groups.dba.js";
+import { type CreateTableGroup } from "./table-groups.dba.ts";
 import z from "zod";
 import {
     createTableGroup,
@@ -7,8 +7,8 @@ import {
     getTableGroup,
     listTableGroups,
     updateTableGroup,
-} from "./table-groups.service.js";
-import type { Assert, Equal } from "../../utils.js";
+} from "./table-groups.service.ts";
+import type { Assert, Equal } from "../../utils.ts";
 
 export async function listTableGroupsController(
     req: express.Request,

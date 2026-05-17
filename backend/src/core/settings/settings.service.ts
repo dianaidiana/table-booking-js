@@ -3,7 +3,7 @@ import {
     dbUpdateSettings,
     type PartialSettings,
     type Settings,
-} from "./settings.dba.js";
+} from "./settings.dba.ts";
 
 export async function getSettings(): Promise<Settings> {
     return await dbGetSettings();

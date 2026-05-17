@@ -1,5 +1,5 @@
-import { getDb } from "../../db-setup.js";
-import type { PartialWithUndefined, ToDb } from "../../utils.js";
+import { getDb } from "../../db-setup.ts";
+import type { PartialWithUndefined, ToDb } from "../../utils.ts";
 
 export interface Table {
     id: number;

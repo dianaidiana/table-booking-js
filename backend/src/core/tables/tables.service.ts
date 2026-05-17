@@ -7,7 +7,7 @@ import {
     type CreateTableDb,
     type Table,
     type UpdateTableDb,
-} from "./tables.dba.js";
+} from "./tables.dba.ts";
 
 export async function listTables(): Promise<Table[]> {
     return await dbListTables();

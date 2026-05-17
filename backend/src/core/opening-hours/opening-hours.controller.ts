@@ -3,10 +3,10 @@ import {
     getOpeningHoursPerDay,
     listOpeningHours,
     updateOpeningHours,
-} from "./opening-hours.service.js";
+} from "./opening-hours.service.ts";
 import z from "zod";
-import type { Assert, Equal } from "../../utils.js";
-import type { UpdateOpeningHours } from "./opening-hours.dba.js";
+import type { Assert, Equal } from "../../utils.ts";
+import type { UpdateOpeningHours } from "./opening-hours.dba.ts";
 
 export async function listOpeningHoursController(
     req: express.Request,

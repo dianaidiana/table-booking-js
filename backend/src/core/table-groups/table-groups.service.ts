@@ -7,7 +7,7 @@ import {
     type CreateTableGroup,
     type TableGroup,
     type UpdateTableGroup,
-} from "./table-groups.dba.js";
+} from "./table-groups.dba.ts";
 
 export async function listTableGroups(): Promise<TableGroup[]> {
     return await dbListTableGroups();

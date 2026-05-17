@@ -1,10 +1,10 @@
-import { getDb } from "../../db-setup.js";
+import { getDb } from "../../db-setup.ts";
 import type {
     Assert,
     EqualPropertyNames,
     PartialWithUndefined,
     ToDb,
-} from "../../utils.js";
+} from "../../utils.ts";
 
 export interface OpeningHours {
     weekday: number;

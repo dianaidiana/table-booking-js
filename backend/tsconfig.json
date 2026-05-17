@@ -39,5 +39,10 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "erasableSyntaxOnly": true,
+
+    // We use these two to allow using nodejs in typescript mode
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   }
 }

@@ -3,7 +3,7 @@ import {
     getOpeningHoursPerDayController,
     listOpeningHoursController,
     updateOpeningHoursController,
-} from "./opening-hours.controller.js";
+} from "./opening-hours.controller.ts";
 
 export const openingHoursRoutes = Router();
 

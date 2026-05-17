@@ -1,10 +1,10 @@
 import { exactOptional } from "zod";
-import { getDb } from "../../db-setup.js";
+import { getDb } from "../../db-setup.ts";
 import type {
     Assert,
     EqualPropertyNames,
     PartialWithUndefined,
-} from "../../utils.js";
+} from "../../utils.ts";
 
 export interface TableGroup {
     id: number;

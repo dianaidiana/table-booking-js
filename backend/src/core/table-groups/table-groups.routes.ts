@@ -5,7 +5,7 @@ import {
     getTableGroupController,
     listTableGroupsController,
     updateTableGroupController,
-} from "./table-groups.controller.js";
+} from "./table-groups.controller.ts";
 
 export const tableGroupsRoutes = Router();
 

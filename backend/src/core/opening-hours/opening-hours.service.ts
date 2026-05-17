@@ -4,7 +4,7 @@ import {
     dbUpdateOpeningHours,
     type OpeningHours,
     type UpdateOpeningHours,
-} from "./opening-hours.dba.js";
+} from "./opening-hours.dba.ts";
 
 export async function listOpeningHours(): Promise<OpeningHours[]> {
     return await dbListOpeningHours();

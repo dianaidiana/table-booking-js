@@ -5,7 +5,7 @@ import {
     getTableController,
     listTablesController,
     updateTableController,
-} from "./tables.controller.js";
+} from "./tables.controller.ts";
 
 export const tablesRoutes = Router();
 

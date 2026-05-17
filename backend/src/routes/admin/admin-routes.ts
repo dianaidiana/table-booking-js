@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { settingsRoutes } from "../../core/settings/settings.routes.js";
-import { tableGroupsRoutes } from "../../core/table-groups/table-groups.routes.js";
-import { tablesRoutes } from "../../core/tables/tables.routes.js";
-import { openingHoursRoutes } from "../../core/opening-hours/opening-hours.routes.js";
+import { settingsRoutes } from "../../core/settings/settings.routes.ts";
+import { tableGroupsRoutes } from "../../core/table-groups/table-groups.routes.ts";
+import { tablesRoutes } from "../../core/tables/tables.routes.ts";
+import { openingHoursRoutes } from "../../core/opening-hours/opening-hours.routes.ts";
 
 export const adminRoutes = Router();
 
