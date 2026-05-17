@@ -1,3 +1,4 @@
+import type Database from "better-sqlite3";
 import { getDb } from "../../db-setup.ts";
 import type {
     Assert,
@@ -5,6 +6,7 @@ import type {
     PartialWithUndefined,
     ToDb,
 } from "../../utils.ts";
+import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface OpeningHours {
     weekday: number;
@@ -56,25 +58,19 @@ export async function dbUpdateOpeningHours(
 ): Promise<OpeningHours> {
     const db = getDb();
 
-    const obj = { opening_time, closing_time, is_closed };
-    type Check = Assert<EqualPropertyNames<typeof obj, UpdateOpeningHours>>;
-
-    const setExprs = ["weekday = weekday"];
-    const values = [];
-    for (const [key, value] of Object.entries(obj)) {
-        if (value !== undefined) {
-            setExprs.push(`${key} = ?`);
-            values.push(value === true ? 1 : value === false ? 0 : value);
-        }
-    }
-
-    const stmt = db.prepare<unknown[], OpeningHoursDb>(
-        `UPDATE opening_hours SET ${setExprs.join(", ")} WHERE weekday = ? RETURNING *`,
+    const out = await dbPatchHelper<UpdateOpeningHours, OpeningHoursDb>(
+        db,
+        weekday,
+        {
+            opening_time,
+            closing_time,
+            is_closed,
+        },
+        {
+            primaryKey: "weekday",
+            tableName: "opening_hours",
+        },
     );
-    const openingHours = stmt.get(...values, weekday);
-    if (!openingHours) {
-        throw new Error("Failed to update opening hours");
-    }
 
-    return castToOpeningHours(openingHours);
+    return castToOpeningHours(out);
 }

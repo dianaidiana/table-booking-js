@@ -18,3 +18,7 @@ export type EqualPropertyNames<A, B> = [keyof A] extends [keyof B]
 export type ToDb<T> = {
     [K in keyof T]: T[K] extends boolean ? number : T[K];
 };
+
+export type OptionalToUndefined<T> = {
+    [K in keyof T]-?: {} extends Pick<T, K> ? T[K] | undefined : T[K];
+};
