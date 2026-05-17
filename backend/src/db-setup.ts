@@ -1,13 +1,13 @@
 import db from "better-sqlite3";
 import fs from "fs";
-import path from "path";
 
 let database: db.Database | null = null;
 
-export function initDb(): db.Database {
+export function initDb(testing: boolean = false): db.Database {
     try {
-        const dbExists = fs.existsSync("./database.db");
-        database = new db("./database.db");
+        const dbExists = !testing && fs.existsSync("./database.db");
+        database = new db(testing ? ":memory:" : "./database.db");
+
         database.pragma("journal_mode = WAL");
         database.pragma("synchronous = normal");
 
@@ -30,10 +30,9 @@ export function initDb(): db.Database {
 }
 
 export function getDb(): db.Database {
-    if (!database) {
-        return initDb();
+    if (database == null) {
+        throw new Error("Database was not initialized");
     }
-
     return database;
 }
 

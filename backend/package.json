@@ -14,6 +14,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "supertest": "^7.2.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
