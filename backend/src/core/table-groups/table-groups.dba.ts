@@ -1,10 +1,5 @@
-import { exactOptional } from "zod";
 import { getDb } from "../../db-setup.ts";
-import type {
-    Assert,
-    EqualPropertyNames,
-    PartialWithUndefined,
-} from "../../utils.ts";
+import type { PartialWithUndefined } from "../../types-utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface TableGroup {

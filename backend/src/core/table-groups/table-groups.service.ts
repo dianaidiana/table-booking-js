@@ -1,3 +1,5 @@
+import { error } from "node:console";
+import { dbListTables } from "../tables/tables.dba.ts";
 import {
     dbCreateTableGroup,
     dbDeleteTableGroup,
@@ -29,9 +31,20 @@ export async function updateTableGroup(
     id: number,
     { name }: UpdateTableGroup,
 ): Promise<TableGroup> {
+    if (await hasConflictingTables(id)) {
+        throw new Error("Failed to update group table: confilcting tables");
+    }
     return await dbUpdateTableGroup(id, { name });
 }
 
 export async function deleteTableGroup(id: number): Promise<boolean> {
+    if (await hasConflictingTables(id)) {
+        throw new Error("Failed to update group table: confilcting tables");
+    }
     return await dbDeleteTableGroup(id);
+}
+
+async function hasConflictingTables(id: number) {
+    const tables = await dbListTables();
+    return tables.some((t) => t.table_group_id == id);
 }

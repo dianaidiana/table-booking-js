@@ -8,7 +8,7 @@ import {
     listTableGroups,
     updateTableGroup,
 } from "./table-groups.service.ts";
-import type { Assert, Equal } from "../../utils.ts";
+import type { Assert, Equal } from "../../types-utils.ts";
 
 export async function listTableGroupsController(
     req: express.Request,
