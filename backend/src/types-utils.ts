@@ -1,0 +1,24 @@
+export type PartialWithUndefined<T> = {
+    [K in keyof T]?: T[K] | undefined;
+};
+
+export type Equal<A, B> =
+    (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+        ? true
+        : false;
+
+export type Assert<T extends true> = T;
+
+export type EqualPropertyNames<A, B> = [keyof A] extends [keyof B]
+    ? [keyof B] extends [keyof A]
+        ? true
+        : false
+    : false;
+
+export type ToDb<T> = {
+    [K in keyof T]: T[K] extends boolean ? number : T[K];
+};
+
+export type OptionalToUndefined<T> = {
+    [K in keyof T]-?: {} extends Pick<T, K> ? T[K] | undefined : T[K];
+};

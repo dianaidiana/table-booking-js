@@ -1,5 +1,8 @@
 import type Database from "better-sqlite3";
-import type { OptionalToUndefined, PartialWithUndefined } from "./utils.ts";
+import type {
+    OptionalToUndefined,
+    PartialWithUndefined,
+} from "./types-utils.ts";
 
 export interface TableInfo<OutT> {
     primaryKey: string;
