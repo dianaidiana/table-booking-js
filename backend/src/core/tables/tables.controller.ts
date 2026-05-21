@@ -73,9 +73,9 @@ export async function updateTableController(
 ) {
     const body = updateTableBodySchema.parse(req.body);
     const { id } = updateTableParamsSchema.parse(req.params);
-    const tableGroup = await updateTable(id, body);
+    const table = await updateTable(id, body);
 
-    res.status(200).json(tableGroup);
+    res.status(200).json(table);
 }
 
 const deleteTableParamsSchema = z
