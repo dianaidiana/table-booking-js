@@ -1,4 +1,3 @@
-import type Database from "better-sqlite3";
 import { getDb } from "../../db-setup.ts";
 import type { PartialWithUndefined, ToDb } from "../../utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
