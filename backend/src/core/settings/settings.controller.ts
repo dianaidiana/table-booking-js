@@ -2,7 +2,7 @@ import express from "express";
 import { getSettings, updateSettings } from "./settings.service.ts";
 import z from "zod";
 import type { PartialSettings } from "./settings.dba.ts";
-import type { Assert, Equal } from "../../utils.ts";
+import type { Assert, Equal } from "../../types-utils.ts";
 
 const updateSettingsBodySchema = z
     .object({

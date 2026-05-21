@@ -1,6 +1,6 @@
 import { getDb } from "../../db-setup.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
-import type { PartialWithUndefined } from "../../utils.ts";
+import type { PartialWithUndefined } from "../../types-utils.ts";
 
 export interface Settings {
     booking_duration: number;
