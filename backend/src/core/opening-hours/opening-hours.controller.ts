@@ -5,7 +5,7 @@ import {
     updateOpeningHours,
 } from "./opening-hours.service.ts";
 import z from "zod";
-import type { Assert, Equal } from "../../utils.ts";
+import type { Assert, Equal } from "../../types-utils.ts";
 import type { UpdateOpeningHours } from "./opening-hours.dba.ts";
 
 export async function listOpeningHoursController(
@@ -38,8 +38,8 @@ export async function getOpeningHoursPerDayController(
 
 const updateOpeningHoursBodySchema = z
     .object({
-        opening_time: z.iso.time(),
-        closing_time: z.iso.time(),
+        opening_time: z.number().positive().max(1440),
+        closing_time: z.number().positive().max(1440),
         is_closed: z.boolean(),
     })
     .strict()

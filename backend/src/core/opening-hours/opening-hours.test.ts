@@ -36,14 +36,14 @@ describe("opening hours", () => {
 
         test("update", async () => {
             const updated1 = await updateOpeningHours(1, {
-                opening_time: "10:00",
+                opening_time: 300,
             });
-            expect(updated1.opening_time).toBe("10:00");
+            expect(updated1.opening_time).toBe(300);
 
             const updated2 = await updateOpeningHours(2, {
-                closing_time: "23:00",
+                closing_time: 1000,
             });
-            expect(updated2.closing_time).toBe("23:00");
+            expect(updated2.closing_time).toBe(1000);
 
             const updated3 = await updateOpeningHours(2, {
                 is_closed: true,

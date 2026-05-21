@@ -1,11 +1,11 @@
 import { getDb } from "../../db-setup.ts";
-import type { PartialWithUndefined, ToDb } from "../../utils.ts";
+import type { PartialWithUndefined, ToDb } from "../../types-utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface OpeningHours {
     weekday: number;
-    opening_time: string;
-    closing_time: string;
+    opening_time: number;
+    closing_time: number;
     is_closed: boolean;
 }
 
