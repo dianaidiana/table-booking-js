@@ -13,13 +13,9 @@ import { tableGroupFactory } from "../../test-factories/table-groups.factory.ts"
 describe("tables", () => {
     describe("service", () => {
         let db;
-        let factory: ReturnType<typeof tableFactory>;
-        let tgFactory: ReturnType<typeof tableGroupFactory>;
 
         beforeEach(() => {
             db = initDb(true);
-            factory = tableFactory(db);
-            tgFactory = tableGroupFactory(db);
         });
 
         afterEach(() => {
@@ -27,14 +23,14 @@ describe("tables", () => {
         });
 
         test("list all", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
-            await factory.create({
+            await tableGroupFactory.create({ name: "Test Group 1" });
+            await tableFactory.create({
                 table_group_id: 1,
                 table_number: "1",
                 capacity: 4,
                 disabled: false,
             });
-            await factory.create({
+            await tableFactory.create({
                 table_group_id: 1,
                 table_number: "2",
                 capacity: 2,
@@ -45,8 +41,8 @@ describe("tables", () => {
         });
 
         test("get by id", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
-            const createdTable = await factory.create({
+            await tableGroupFactory.create({ name: "Test Group 1" });
+            const createdTable = await tableFactory.create({
                 table_group_id: 1,
                 table_number: "11",
                 capacity: 4,
@@ -60,7 +56,7 @@ describe("tables", () => {
         });
 
         test("create", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
+            await tableGroupFactory.create({ name: "Test Group 1" });
             const table = await createTable({
                 table_group_id: 1,
                 table_number: "11",
@@ -77,9 +73,9 @@ describe("tables", () => {
         });
 
         test("update", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
-            await tgFactory.create({ name: "Test Group 2" });
-            await factory.create({
+            await tableGroupFactory.create({ name: "Test Group 1" });
+            await tableGroupFactory.create({ name: "Test Group 2" });
+            await tableFactory.create({
                 table_group_id: 1,
                 table_number: "11",
                 capacity: 4,
@@ -107,8 +103,8 @@ describe("tables", () => {
         });
 
         test("update empty", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
-            const originalTable = await factory.create({
+            await tableGroupFactory.create({ name: "Test Group 1" });
+            const originalTable = await tableFactory.create({
                 table_group_id: 1,
                 table_number: "11",
                 capacity: 4,
@@ -119,8 +115,8 @@ describe("tables", () => {
         });
 
         test("delete", async () => {
-            await tgFactory.create({ name: "Test Group 1" });
-            await factory.create({
+            await tableGroupFactory.create({ name: "Test Group 1" });
+            await tableFactory.create({
                 table_group_id: 1,
                 table_number: "11",
                 capacity: 4,

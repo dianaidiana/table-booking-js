@@ -1,3 +1,4 @@
+import { dbListBookings } from "../bookings/bookings.dba.ts";
 import {
     dbCreateTable,
     dbDeleteTable,
@@ -26,18 +27,24 @@ export async function updateTable(
     updateTable: UpdateTable,
 ): Promise<Table> {
     if (updateTable.disabled) {
-        // conflictingBookings = await getUpcomingBookingsForTable(table_id)
-        // if (conflictingBookings) {
-        //  return ?
-        // }
+        if (await hasConflictingBookings(id)) {
+            throw new Error("Failed to update table: conflicting bookings");
+        }
     }
     return await dbUpdateTable(id, updateTable);
 }
 
 export async function deleteTable(id: number): Promise<boolean> {
-    // conflictingBookings = await getUpcomingBookingsForTable(table_id)
-    // if (conflictingBookings) {
-    //  return false;
-    // }
+    if (await hasConflictingBookings(id)) {
+        throw new Error("Failed to delete table: conflicting bookings");
+    }
     return await dbDeleteTable(id);
+}
+
+async function hasConflictingBookings(id: number) {
+    const conflictingBookings = await dbListBookings({
+        specificTableId: id,
+    });
+
+    return conflictingBookings.length > 0;
 }

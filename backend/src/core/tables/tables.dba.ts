@@ -1,5 +1,5 @@
 import { getDb } from "../../db-setup.ts";
-import type { PartialWithUndefined, ToDb } from "../../utils.ts";
+import type { PartialWithUndefined, ToDb } from "../../types-utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
 
 export interface Table {

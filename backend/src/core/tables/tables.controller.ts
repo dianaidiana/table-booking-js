@@ -8,7 +8,7 @@ import {
 } from "./tables.service.ts";
 import z from "zod";
 import type { CreateTable } from "./tables.dba.ts";
-import type { Assert, Equal } from "../../utils.ts";
+import type { Assert, Equal } from "../../types-utils.ts";
 
 export async function listTablesController(
     req: express.Request,
