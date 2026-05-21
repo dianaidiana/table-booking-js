@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
 );
 CREATE TABLE IF NOT EXISTS opening_hours (
     weekday INTEGER PRIMARY KEY, -- 0-6, Sunday-Saturday
-    opening_time VARCHAR(5) NOT NULL,
-    closing_time VARCHAR(5) NOT NULL,
+    opening_time INTEGER NOT NULL,
+    closing_time INTEGER NOT NULL,
     is_closed BOOLEAN NOT NULL
 );
 CREATE TABLE IF NOT EXISTS bookings (
