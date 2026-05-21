@@ -1,8 +1,9 @@
 import { getDb } from "../../db-setup.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
-import type { PartialWithUndefined } from "../../utils.ts";
+import type { PartialWithUndefined } from "../../types-utils.ts";
 import type { UUID } from "crypto";
+import { getMinutesFrom00hs } from "../../utils.ts";
 
 export interface Booking {
     id: number;
@@ -25,6 +26,7 @@ export interface Filters {
     specificDate?: string | undefined;
     startDate?: string | undefined;
     endDate?: string | undefined;
+    weekday?: number | undefined;
     specificTime?: number | undefined;
     startTime?: number | undefined;
     endTime?: number | undefined;
@@ -68,6 +70,7 @@ function makeSqlFilterArguments(filters: Filters) {
         specificDate,
         startDate,
         endDate,
+        weekday,
         specificTime,
         startTime,
         endTime,
@@ -87,6 +90,11 @@ function makeSqlFilterArguments(filters: Filters) {
         setExprs.push("booking_date >= date('now')");
     }
 
+    if (weekday) {
+        setExprs.push("strftime('%w', booking_date) = ?");
+        values.push(weekday);
+    }
+
     if (specificTime) {
         setExprs.push("booking_start_time = ?");
         values.push(specificTime);
@@ -94,6 +102,9 @@ function makeSqlFilterArguments(filters: Filters) {
         setExprs.push("booking_start_time BETWEEN ? AND ?");
         values.push(startTime);
         values.push(endTime);
+    } else {
+        setExprs.push("booking_start_time >= ?");
+        values.push(getMinutesFrom00hs(new Date()));
     }
 
     if (!includeCancelled) {
@@ -199,13 +210,4 @@ export async function dbUpdateBooking(
             tableName: "bookings",
         },
     );
-}
-
-export async function dbDeleteBooking(id: number): Promise<boolean> {
-    const db = getDb();
-    const stmt = db.prepare<[number], void>(
-        "DELETE FROM bookings WHERE id = ?",
-    );
-    const result = stmt.run(id);
-    return result.changes > 0;
 }

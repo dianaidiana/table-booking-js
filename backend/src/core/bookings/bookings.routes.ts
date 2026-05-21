@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
     createBookingController,
-    deleteBookingController,
     getBookingController,
     listBookingsController,
     updateBookingController,
@@ -13,4 +12,3 @@ bookingsRoutes.get("/", listBookingsController);
 bookingsRoutes.get("/:id", getBookingController);
 bookingsRoutes.post("/", createBookingController);
 bookingsRoutes.patch("/:id", updateBookingController);
-bookingsRoutes.delete("/:id", deleteBookingController);

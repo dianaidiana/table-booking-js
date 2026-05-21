@@ -1,10 +1,9 @@
 import express from "express";
-import z, { boolean } from "zod";
+import z from "zod";
 import type { CreateBooking, Filters } from "./bookings.dba.ts";
-import type { Assert, Equal } from "../../utils.ts";
+import type { Assert, Equal } from "../../types-utils.ts";
 import {
     createBooking,
-    deleteBooking,
     getBooking,
     listBookings,
     updateBooking,
@@ -16,6 +15,7 @@ const filterBookingsBodySchema = z
         specificDate: z.iso.date(),
         startDate: z.iso.date(),
         endDate: z.iso.date(),
+        weekday: z.number().max(6).min(0),
         specificTime: z.number().positive(),
         startTime: z.number().positive(),
         endTime: z.number().positive(),
@@ -106,24 +106,4 @@ export async function updateBookingController(
     const booking = await updateBooking(id, body);
 
     res.status(200).json(booking);
-}
-
-const deleteBookingParamsSchema = z
-    .object({
-        id: z.coerce.number(),
-    })
-    .strict();
-
-export async function deleteBookingController(
-    req: express.Request,
-    res: express.Response,
-) {
-    const { id } = deleteBookingParamsSchema.parse(req.params);
-    const isDeleted = await deleteBooking(id);
-
-    if (isDeleted) {
-        res.status(204).end();
-    } else {
-        res.status(404).json({ error: "not found" });
-    }
 }

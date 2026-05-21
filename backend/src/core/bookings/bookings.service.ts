@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import {
     dbCreateBooking,
-    dbDeleteBooking,
     dbGetBooking,
     dbListBookings,
     dbUpdateBooking,
@@ -10,6 +9,10 @@ import {
     type Filters,
     type UpdateBooking,
 } from "./bookings.dba.ts";
+import { dbGetTable } from "../tables/tables.dba.ts";
+import { ta } from "zod/locales";
+import { dbGetOpeningHoursPerDay } from "../opening-hours/opening-hours.dba.ts";
+import { dbGetSettings } from "../settings/settings.dba.ts";
 
 export async function listBookings(filters: Filters): Promise<Booking[]> {
     return await dbListBookings(filters);
@@ -22,6 +25,19 @@ export async function getBooking(id: number): Promise<Booking | undefined> {
 export async function createBooking(
     createBooking: CreateBooking,
 ): Promise<Booking> {
+    const isAvailable = await isTableAvailable({
+        table_id: createBooking.table_id,
+        booking_date: createBooking.booking_date,
+        duration_minutes:
+            createBooking.duration_minutes ??
+            (await dbGetSettings()).booking_duration,
+        booking_start_time: createBooking.booking_start_time,
+    });
+
+    if (!isAvailable) {
+        throw new Error("Failed to create booking: table not available");
+    }
+
     const bookingSecret = randomUUID();
     return await dbCreateBooking(createBooking, bookingSecret);
 }
@@ -30,9 +46,89 @@ export async function updateBooking(
     id: number,
     updateBooking: UpdateBooking,
 ): Promise<Booking> {
+    if (
+        updateBooking.table_id ||
+        updateBooking.booking_date ||
+        updateBooking.booking_start_time ||
+        updateBooking.duration_minutes
+    ) {
+        const currentBooking = await dbGetBooking(id);
+        if (!currentBooking) {
+            throw new Error("Failed to update booking");
+        }
+
+        const hardRequirements = {
+            table_id: updateBooking.table_id ?? currentBooking.table_id,
+            booking_date:
+                updateBooking.booking_date ?? currentBooking.booking_date,
+            duration_minutes:
+                updateBooking.duration_minutes ??
+                currentBooking.duration_minutes,
+            booking_start_time:
+                updateBooking.booking_start_time ??
+                currentBooking.booking_start_time,
+        };
+
+        const isAvailable = await isTableAvailable(hardRequirements, id);
+
+        if (!isAvailable) {
+            throw new Error("Failed to update booking: table not available");
+        }
+    }
+
     return await dbUpdateBooking(id, updateBooking);
 }
 
-export async function deleteBooking(id: number): Promise<boolean> {
-    return await dbDeleteBooking(id);
+interface HardRequirements {
+    table_id: number;
+    booking_date: string;
+    duration_minutes: number;
+    booking_start_time: number;
+}
+
+async function isTableAvailable(
+    hardRequirements: HardRequirements,
+    excludeBookingId?: number,
+) {
+    const table = await dbGetTable(hardRequirements.table_id);
+    if (!table || table.disabled) {
+        return false;
+    }
+
+    const bookingDate = new Date(hardRequirements.booking_date);
+    const weekday = bookingDate.getDay();
+    const openingHours = await dbGetOpeningHoursPerDay(weekday);
+
+    if (!openingHours || openingHours.is_closed) {
+        return false;
+    }
+
+    const duration = hardRequirements.duration_minutes;
+    const newStart = hardRequirements.booking_start_time;
+    const newEnd = newStart + duration;
+    if (
+        openingHours.opening_time > newStart ||
+        openingHours.closing_time < newEnd
+    ) {
+        return false;
+    }
+
+    let existingBookings = await dbListBookings({
+        specificDate: hardRequirements.booking_date,
+        specificTableId: hardRequirements.table_id,
+    });
+
+    if (excludeBookingId) {
+        existingBookings = existingBookings.filter(
+            (b) => b.id !== excludeBookingId,
+        );
+    }
+
+    const someHasConflict = existingBookings.some((b) => {
+        const existingStart = b.booking_start_time;
+        const existingEnd = b.booking_start_time + b.duration_minutes;
+        return existingEnd > newStart && existingStart < newEnd;
+    });
+
+    return !someHasConflict;
 }
