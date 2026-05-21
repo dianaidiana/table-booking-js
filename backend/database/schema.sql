@@ -27,16 +27,17 @@ CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     table_id INTEGER NOT NULL,
     booking_date DATE NOT NULL,
-    booking_start_time VARCHAR(5) NOT NULL,
+    booking_start_time INTEGER NOT NULL,
     pax INTEGER NOT NULL,
     guest_first_name VARCHAR(255) NOT NULL,
     guest_last_name VARCHAR(255) NOT NULL,
     guest_email VARCHAR(255) NOT NULL,
     guest_phone VARCHAR(20) NOT NULL,
     special_requests TEXT,
-    status VARCHAR(50) DEFAULT 'pending',
-    booking_secret VARCHAR(255) UNIQUE, -- Formerly confirmation_token
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, booking_end_time VARCHAR(5), duration_minutes INTEGER,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    booking_secret VARCHAR(255) NOT NULL UNIQUE, 
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    duration_minutes INTEGER,
     FOREIGN KEY (table_id) REFERENCES tables(id)
 );
 CREATE TABLE IF NOT EXISTS settings (
