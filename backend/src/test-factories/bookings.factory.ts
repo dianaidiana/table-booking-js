@@ -3,7 +3,6 @@ import {
     dbCreateBooking,
     type CreateBooking,
 } from "../core/bookings/bookings.dba.ts";
-import { object } from "zod";
 
 export const bookingFactory = {
     create: async (obj: CreateBooking) => {

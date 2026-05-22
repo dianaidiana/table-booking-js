@@ -23,33 +23,17 @@ describe("tables", () => {
         });
 
         test("list all", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
-            await tableFactory.create({
-                table_group_id: 1,
-                table_number: "1",
-                capacity: 4,
-                disabled: false,
-            });
-            await tableFactory.create({
-                table_group_id: 1,
-                table_number: "2",
-                capacity: 2,
-                disabled: false,
-            });
+            await tableFactory.createManyDefaultsWithTableGroup(2);
             const tables = await listTables();
             expect(tables).toHaveLength(2);
         });
 
         test("get by id", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
-            const createdTable = await tableFactory.create({
-                table_group_id: 1,
-                table_number: "11",
-                capacity: 4,
-                disabled: false,
-            });
+            const createdTable = (
+                await tableFactory.createDefaultWithTableGroup()
+            ).table;
             const table = await getTable(1);
-            expect(table).toStrictEqual({ ...createdTable, disabled: false });
+            expect(table).toStrictEqual(createdTable);
 
             const undefinedTable = await getTable(2);
             expect(undefinedTable).toBeUndefined();
@@ -72,15 +56,10 @@ describe("tables", () => {
             });
         });
 
-        test("update", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
+        test("update everything but disabled", async () => {
+            await tableFactory.createDefaultWithTableGroup();
             await tableGroupFactory.create({ name: "Test Group 2" });
-            await tableFactory.create({
-                table_group_id: 1,
-                table_number: "11",
-                capacity: 4,
-                disabled: false,
-            });
+
             const update1 = await updateTable(1, {
                 table_number: "12",
             });
@@ -100,6 +79,22 @@ describe("tables", () => {
                 disabled: true,
             });
             expect(update4.disabled).toBe(true);
+        });
+
+        test("update disabled without bookings", async () => {
+            await tableFactory.createDefaultWithTableGroup();
+            const update4 = await updateTable(1, {
+                disabled: true,
+            });
+            expect(update4.disabled).toBe(true);
+        });
+
+        test("update disabled with bookings", async () => {
+            await tableFactory.createDefaultWithTableGroup();
+            const update4 = await updateTable(1, {
+                disabled: true,
+            });
+            // TODO
         });
 
         test("update empty", async () => {
