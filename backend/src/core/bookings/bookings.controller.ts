@@ -70,7 +70,7 @@ const createBookingBodySchema = z
         guest_email: z.email(),
         guest_phone: z.e164(),
         special_requests: z.string().nonempty().optional(),
-        status: z.string().nonempty(),
+        status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]),
         duration_minutes: z.number().positive().optional(),
     })
     .strict();

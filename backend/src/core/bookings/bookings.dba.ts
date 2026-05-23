@@ -16,7 +16,7 @@ export interface Booking {
     guest_email: string;
     guest_phone: string;
     special_requests?: string;
-    status: string;
+    status: "PENDING" | "CONFIRMED" | "CANCELLED";
     booking_secret: string;
     created_at: string;
     duration_minutes: number;

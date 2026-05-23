@@ -32,6 +32,7 @@ export async function createBooking(
             createBooking.duration_minutes ??
             (await dbGetSettings()).booking_duration,
         booking_start_time: createBooking.booking_start_time,
+        pax: createBooking.pax,
     });
 
     if (!isAvailable) {
@@ -67,6 +68,7 @@ export async function updateBooking(
             booking_start_time:
                 updateBooking.booking_start_time ??
                 currentBooking.booking_start_time,
+            pax: updateBooking.pax ?? currentBooking.booking_start_time,
         };
 
         const isAvailable = await isTableAvailable(hardRequirements, id);
@@ -84,6 +86,7 @@ interface HardRequirements {
     booking_date: string;
     duration_minutes: number;
     booking_start_time: number;
+    pax: number;
 }
 
 async function isTableAvailable(
@@ -91,7 +94,7 @@ async function isTableAvailable(
     excludeBookingId?: number,
 ) {
     const table = await dbGetTable(hardRequirements.table_id);
-    if (!table || table.disabled) {
+    if (!table || table.disabled || table.capacity < hardRequirements.pax) {
         return false;
     }
 
