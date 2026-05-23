@@ -7,7 +7,7 @@ import {
     listTableGroups,
     updateTableGroup,
 } from "./table-groups.service.ts";
-import { tableGroupFactory } from "../../test-factories/table-groups.factory.ts";
+import { factory } from "../../test-factories/seeds.factory.ts";
 
 describe("table-groups", () => {
     describe("service", () => {
@@ -22,20 +22,17 @@ describe("table-groups", () => {
         });
 
         test("list all", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
-            await tableGroupFactory.create({ name: "Test Group 2" });
+            await factory.createManyDefaultTableGroups(5);
             const tableGroups = await listTableGroups();
-            expect(tableGroups).toHaveLength(2);
+            expect(tableGroups).toHaveLength(5);
         });
 
         test("get by id", async () => {
-            const createdTableGroup = await tableGroupFactory.create({
-                name: "Test Group 1",
-            });
-            const tableGroup = await getTableGroup(1);
-            expect(tableGroup).toStrictEqual(createdTableGroup);
+            const tableGroup = await factory.createDefaultTableGroup();
+            const result = await getTableGroup(tableGroup.id);
+            expect(result).toStrictEqual(tableGroup);
 
-            const undefinedTableGroup = await getTableGroup(2);
+            const undefinedTableGroup = await getTableGroup(10000);
             expect(undefinedTableGroup).toBeUndefined();
         });
 
@@ -50,30 +47,33 @@ describe("table-groups", () => {
         });
 
         test("update", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
-            const tableGroup = await updateTableGroup(1, {
-                name: "Test Group 1 adapted",
+            const tableGroup = await factory.createDefaultTableGroup();
+            const newName = tableGroup.name + "adapted";
+            const result = await updateTableGroup(1, {
+                name: newName,
             });
-            expect(tableGroup).toStrictEqual({
+            expect(result).toStrictEqual({
                 ...tableGroup,
-                name: "Test Group 1 adapted",
+                name: newName,
             });
         });
 
         test("update empty", async () => {
-            const originalTableGroup = await tableGroupFactory.create({
-                name: "Test Group 1",
-            });
-            const tableGroup = await updateTableGroup(1, {});
-            expect(tableGroup).toStrictEqual(originalTableGroup);
+            const tableGroup = await factory.createDefaultTableGroup();
+            const result = await updateTableGroup(1, {});
+            expect(result).toStrictEqual(tableGroup);
         });
 
-        test("delete", async () => {
-            await tableGroupFactory.create({ name: "Test Group 1" });
-            const deleted = await deleteTableGroup(1);
-            expect(deleted).toBe(true);
-            const tableGroup = await getTableGroup(1);
-            expect(tableGroup).toBeUndefined();
+        test("delete with table", async () => {
+            const { tableGroup } =
+                await factory.createDefaultTableGroupWithTable();
+            await expect(deleteTableGroup(tableGroup.id)).rejects.toThrow();
+        });
+
+        test("delete without table", async () => {
+            const tableGroup = await factory.createDefaultTableGroup();
+            const result = await deleteTableGroup(tableGroup.id);
+            expect(result).toBe(true);
         });
     });
 });
