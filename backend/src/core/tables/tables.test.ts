@@ -3,13 +3,14 @@ import { tablesFactory } from "../../test-factories/tables.factory.ts";
 import { closeDb, initDb } from "../../db-setup.ts";
 import {
     createTable,
-    deleteTable,
     getTable,
     listTables,
+    TableHasBookingsUpdateError,
     updateTable,
 } from "./tables.service.ts";
 import { tableGroupsFactory } from "../../test-factories/table-groups.factory.ts";
 import { bookingsFactory } from "../../test-factories/bookings.factory.ts";
+import { getMinutesFrom00hs } from "../../utils.ts";
 
 describe("tables", () => {
     describe("service", () => {
@@ -101,7 +102,7 @@ describe("tables", () => {
 
         console.log(Temporal.Now.plainDateISO().add({ days: 1 }).toString());
 
-        test("update disabled with bookings", async () => {
+        test("disable with future bookings", async () => {
             const table = await tablesFactory.create();
             const booking = await bookingsFactory.create({
                 table_id: table.id,
@@ -115,7 +116,56 @@ describe("tables", () => {
                     await updateTable(table.id, {
                         disabled: true,
                     }),
-            ).rejects.toThrow();
+            ).rejects.instanceOf(TableHasBookingsUpdateError);
+        });
+
+        test("disable with future bookings today", async () => {
+            const table = await tablesFactory.create();
+            const booking = await bookingsFactory.create({
+                table_id: table.id,
+                booking_date: Temporal.Now.plainDateISO().toString(),
+                booking_start_time:
+                    getMinutesFrom00hs(Temporal.Now.plainTimeISO()) + 1,
+            });
+
+            expect(
+                async () =>
+                    await updateTable(table.id, {
+                        disabled: true,
+                    }),
+            ).rejects.instanceOf(TableHasBookingsUpdateError);
+        });
+
+        test("disable with past bookings", async () => {
+            const table = await tablesFactory.create();
+            const booking = await bookingsFactory.create({
+                table_id: table.id,
+                booking_date: Temporal.Now.plainDateISO()
+                    .subtract({ days: 2 })
+                    .toString(),
+            });
+
+            expect(
+                await updateTable(table.id, {
+                    disabled: true,
+                }),
+            ).toStrictEqual({ ...table, disabled: true });
+        });
+
+        test("disable with past bookings today", async () => {
+            const table = await tablesFactory.create();
+            const booking = await bookingsFactory.create({
+                table_id: table.id,
+                booking_date: Temporal.Now.plainDateISO().toString(),
+                booking_start_time:
+                    getMinutesFrom00hs(Temporal.Now.plainTimeISO()) - 1,
+            });
+
+            expect(
+                await updateTable(table.id, {
+                    disabled: true,
+                }),
+            ).toStrictEqual({ ...table, disabled: true });
         });
 
         test("update empty", async () => {
@@ -124,18 +174,18 @@ describe("tables", () => {
             expect(update).toStrictEqual(table);
         });
 
-        test("delete without bookings", async () => {
-            const table = await tablesFactory.create();
-            const result = await deleteTable(table.id);
-            expect(result).toBe(true);
-        });
+        // test("delete without bookings", async () => {
+        //     const table = await tablesFactory.create();
+        //     const result = await deleteTable(table.id);
+        //     expect(result).toBe(true);
+        // });
 
-        test("delete with bookings", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
-                table_id: table.id,
-            });
-            await expect(deleteTable(table.id)).rejects.toThrow();
-        });
+        // test("delete with bookings", async () => {
+        //     const table = await tablesFactory.create();
+        //     const booking = await bookingsFactory.create({
+        //         table_id: table.id,
+        //     });
+        //     await expect(deleteTable(table.id)).rejects.toThrow();
+        // });
     });
 });

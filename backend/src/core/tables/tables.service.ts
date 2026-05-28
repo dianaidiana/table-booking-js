@@ -1,3 +1,4 @@
+import { getMinutesFrom00hs } from "../../utils.ts";
 import { dbExistsBookings, dbListBookings } from "../bookings/bookings.dba.ts";
 import {
     dbCreateTable,
@@ -22,6 +23,14 @@ export async function createTable(createTable: CreateTable): Promise<Table> {
     return await dbCreateTable(createTable);
 }
 
+export class TableHasBookingsUpdateError extends Error {
+    public id;
+    constructor(id: number) {
+        super(`Failed to update table ${id}; it has associated bookings`);
+        this.id = id;
+    }
+}
+
 export async function updateTable(
     id: number,
     updateTable: UpdateTable,
@@ -31,27 +40,26 @@ export async function updateTable(
             await dbExistsBookings({
                 tableId: id,
                 startDate: Temporal.Now.plainDateISO().toString(),
-                //startTime
+                startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
             })
         ) {
-            throw new Error("Failed to update table: conflicting bookings");
+            throw new TableHasBookingsUpdateError(id);
         }
     }
     return await dbUpdateTable(id, updateTable);
 }
 
+// TODO: evaluate how delete logic should work for tables with old bookings
 export async function deleteTable(id: number): Promise<boolean> {
-    if (await hasBookings(id)) {
-        throw new Error("Failed to delete table: conflicting bookings");
-    }
-    return await dbDeleteTable(id);
-}
-
-//TODO: hasBookingsAfter(id, time, date)
-async function hasBookings(id: number) {
-    const conflictingBookings = await dbListBookings({
-        tableId: id,
-    });
-
-    return conflictingBookings.length > 0;
+    // if (
+    //     await dbExistsBookings({
+    //         tableId: id,
+    //         startDate: Temporal.Now.plainDateISO().toString(),
+    //         startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
+    //     })
+    // ) {
+    //     throw new Error("Failed to delete table: conflicting bookings");
+    // }
+    // return await dbDeleteTable(id);
+    throw new Error("not implemented");
 }
