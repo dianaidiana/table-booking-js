@@ -27,9 +27,7 @@ export interface BookingsFilters {
     startDate?: string | undefined;
     endDate?: string | undefined;
     weekday?: number | undefined;
-    specificTime?: number | undefined;
     startTime?: number | undefined;
-    endTime?: number | undefined;
     includeCancelled?: boolean | undefined;
     tableId?: number | undefined;
     guestEmail?: string | undefined;
@@ -91,12 +89,10 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         startDate,
         endDate,
         weekday,
-        specificTime,
         startTime,
-        endTime,
         includeCancelled,
-        tableId: specificTableId,
-        guestEmail: specificGuestEmail,
+        tableId,
+        guestEmail,
     } = filters;
 
     if (specificDate) {
@@ -107,15 +103,14 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         setExprs.push("booking_date >= ?");
         values.push(startDate);
     }
+    if (endDate) {
+        setExprs.push("booking_date <= ?");
+        values.push(endDate);
+    }
 
     if (weekday) {
         setExprs.push("strftime('%w', booking_date) = ?");
         values.push(weekday);
-    }
-
-    if (specificTime) {
-        setExprs.push("booking_start_time = ?");
-        values.push(specificTime);
     }
 
     if (startTime) {
@@ -127,14 +122,14 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         setExprs.push("status != 'CANCELLED'");
     }
 
-    if (specificTableId !== undefined) {
+    if (tableId !== undefined) {
         setExprs.push("table_id = ?");
-        values.push(specificTableId);
+        values.push(tableId);
     }
 
-    if (specificGuestEmail !== undefined) {
+    if (guestEmail !== undefined) {
         setExprs.push("guest_email = ?");
-        values.push(specificGuestEmail);
+        values.push(guestEmail);
     }
 
     return { setExpr: setExprs.join(" AND "), values };
