@@ -1,6 +1,6 @@
 import express from "express";
 import {
-    getOpeningHoursPerDay,
+    getOpeningHoursByDay,
     listOpeningHours,
     updateOpeningHours,
 } from "./opening-hours.service.ts";
@@ -28,7 +28,7 @@ export async function getOpeningHoursPerDayController(
 ) {
     const { weekday } = getOpeningHoursParamsSchema.parse(req.params);
 
-    const openingHours = await getOpeningHoursPerDay(weekday);
+    const openingHours = await getOpeningHoursByDay(weekday);
     if (!openingHours) {
         res.status(404).json({ error: "not found" });
     }

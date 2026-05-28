@@ -11,7 +11,7 @@ export async function listOpeningHours(): Promise<OpeningHours[]> {
     return await dbListOpeningHours();
 }
 
-export async function getOpeningHoursPerDay(
+export async function getOpeningHoursByDay(
     weekday: number,
 ): Promise<OpeningHours | undefined> {
     return await dbGetOpeningHoursByDay(weekday);

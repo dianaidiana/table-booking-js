@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { closeDb, initDb } from "../../db-setup.ts";
 import {
     listOpeningHours,
-    getOpeningHoursPerDay,
+    getOpeningHoursByDay,
     updateOpeningHours,
 } from "./opening-hours.service.ts";
 
@@ -22,7 +22,7 @@ describe("opening hours", () => {
         });
 
         test("get by weekday", async () => {
-            const openingHours = await getOpeningHoursPerDay(0); // Sunday
+            const openingHours = await getOpeningHoursByDay(0); // Sunday
             expect(openingHours).toStrictEqual({
                 weekday: 0,
                 opening_time: "09:00",
@@ -30,7 +30,7 @@ describe("opening hours", () => {
                 is_closed: false,
             });
 
-            const nonexistantOpeningHours = await getOpeningHoursPerDay(7); // Invalid weekday
+            const nonexistantOpeningHours = await getOpeningHoursByDay(7); // Invalid weekday
             expect(nonexistantOpeningHours).toBeUndefined();
         });
 
@@ -52,7 +52,7 @@ describe("opening hours", () => {
         });
 
         test("update empty", async () => {
-            const originalOpeningHours = await getOpeningHoursPerDay(3);
+            const originalOpeningHours = await getOpeningHoursByDay(3);
             const updated = await updateOpeningHours(3, {});
             expect(updated).toStrictEqual(originalOpeningHours);
         });
