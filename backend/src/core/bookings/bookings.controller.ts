@@ -1,6 +1,6 @@
 import express from "express";
 import z from "zod";
-import type { CreateBooking, Filters } from "./bookings.dba.ts";
+import type { CreateBooking, BookingsFilters } from "./bookings.dba.ts";
 import type { Assert, Equal } from "../../types-utils.ts";
 import {
     createBooking,
@@ -20,14 +20,14 @@ const filterBookingsBodySchema = z
         startTime: z.number().positive(),
         endTime: z.number().positive(),
         includeCancelled: z.boolean(),
-        specificTableId: z.number().positive(),
-        specificGuestEmail: z.email(),
+        tableId: z.number().positive(),
+        guestEmail: z.email(),
     })
     .strict()
     .partial();
 
 type CheckFilters = Assert<
-    Equal<z.infer<typeof filterBookingsBodySchema>, Filters>
+    Equal<z.infer<typeof filterBookingsBodySchema>, BookingsFilters>
 >;
 
 export async function listBookingsController(

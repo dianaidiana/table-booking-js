@@ -6,15 +6,16 @@ import {
     dbUpdateBooking,
     type Booking,
     type CreateBooking,
-    type Filters,
+    type BookingsFilters,
     type UpdateBooking,
 } from "./bookings.dba.ts";
 import { dbGetTable } from "../tables/tables.dba.ts";
-import { ta } from "zod/locales";
-import { dbGetOpeningHoursPerDay } from "../opening-hours/opening-hours.dba.ts";
+import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 
-export async function listBookings(filters: Filters): Promise<Booking[]> {
+export async function listBookings(
+    filters: BookingsFilters,
+): Promise<Booking[]> {
     return await dbListBookings(filters);
 }
 
@@ -100,7 +101,7 @@ async function isTableAvailable(
 
     const bookingDate = new Date(hardRequirements.booking_date);
     const weekday = bookingDate.getDay();
-    const openingHours = await dbGetOpeningHoursPerDay(weekday);
+    const openingHours = await dbGetOpeningHoursByDay(weekday);
 
     if (!openingHours || openingHours.is_closed) {
         return false;
@@ -118,7 +119,7 @@ async function isTableAvailable(
 
     let existingBookings = await dbListBookings({
         specificDate: hardRequirements.booking_date,
-        specificTableId: hardRequirements.table_id,
+        tableId: hardRequirements.table_id,
     });
 
     if (excludeBookingId) {

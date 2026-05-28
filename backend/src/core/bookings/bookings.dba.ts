@@ -22,7 +22,7 @@ export interface Booking {
     duration_minutes: number;
 }
 
-export interface Filters {
+export interface BookingsFilters {
     specificDate?: string | undefined;
     startDate?: string | undefined;
     endDate?: string | undefined;
@@ -31,8 +31,8 @@ export interface Filters {
     startTime?: number | undefined;
     endTime?: number | undefined;
     includeCancelled?: boolean | undefined;
-    specificTableId?: number | undefined;
-    specificGuestEmail?: string | undefined;
+    tableId?: number | undefined;
+    guestEmail?: string | undefined;
 }
 
 export interface CreateBooking extends Omit<
@@ -49,7 +49,9 @@ export interface CreateBooking extends Omit<
 
 export type UpdateBooking = PartialWithUndefined<CreateBooking>;
 
-export async function dbListBookings(filters: Filters): Promise<Booking[]> {
+export async function dbListBookings(
+    filters: BookingsFilters,
+): Promise<Booking[]> {
     const db = getDb();
     const { setExpr, values } = makeSqlFilterArguments(filters);
 
@@ -62,7 +64,25 @@ export async function dbListBookings(filters: Filters): Promise<Booking[]> {
         .all(...values);
 }
 
-function makeSqlFilterArguments(filters: Filters) {
+export async function dbExistsBookings(
+    filters: BookingsFilters,
+): Promise<boolean> {
+    const db = getDb();
+    const { setExpr, values } = makeSqlFilterArguments(filters);
+
+    return (
+        db
+            .prepare(
+                `SELECT id
+                FROM bookings
+                WHERE ${setExpr}
+            `,
+            )
+            .get(...values) !== undefined
+    );
+}
+
+function makeSqlFilterArguments(filters: BookingsFilters) {
     const setExprs = ["1 = 1"];
     const values = [];
 
@@ -75,19 +95,17 @@ function makeSqlFilterArguments(filters: Filters) {
         startTime,
         endTime,
         includeCancelled,
-        specificTableId,
-        specificGuestEmail,
+        tableId: specificTableId,
+        guestEmail: specificGuestEmail,
     } = filters;
 
     if (specificDate) {
         setExprs.push("booking_date = ?");
         values.push(specificDate);
-    } else if (startDate && endDate) {
-        setExprs.push("booking_date BETWEEN ? AND ?");
+    }
+    if (startDate) {
+        setExprs.push("booking_date >= ?");
         values.push(startDate);
-        values.push(endDate);
-    } else {
-        setExprs.push("booking_date >= date('now')");
     }
 
     if (weekday) {
@@ -98,25 +116,23 @@ function makeSqlFilterArguments(filters: Filters) {
     if (specificTime) {
         setExprs.push("booking_start_time = ?");
         values.push(specificTime);
-    } else if (startTime && endTime) {
-        setExprs.push("booking_start_time BETWEEN ? AND ?");
-        values.push(startTime);
-        values.push(endTime);
-    } else {
+    }
+
+    if (startTime) {
         setExprs.push("booking_start_time >= ?");
-        values.push(getMinutesFrom00hs(new Date()));
+        values.push(startTime);
     }
 
     if (!includeCancelled) {
         setExprs.push("status != 'CANCELLED'");
     }
 
-    if (specificTableId) {
+    if (specificTableId !== undefined) {
         setExprs.push("table_id = ?");
         values.push(specificTableId);
     }
 
-    if (specificGuestEmail) {
+    if (specificGuestEmail !== undefined) {
         setExprs.push("guest_email = ?");
         values.push(specificGuestEmail);
     }
@@ -158,7 +174,7 @@ export async function dbCreateBooking(
 
     const stmt = db.prepare<unknown[], Booking>(
         `INSERT INTO bookings (${setExprs.join(", ")}) 
-        VALUES (${values.join(", ")}) 
+        VALUES (${values.map(() => "?").join(", ")}) 
         RETURNING *`,
     );
 

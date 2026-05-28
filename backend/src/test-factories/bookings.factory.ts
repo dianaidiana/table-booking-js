@@ -3,16 +3,48 @@ import {
     dbCreateBooking,
     type CreateBooking,
 } from "../core/bookings/bookings.dba.ts";
+import { tablesFactory } from "./tables.factory.ts";
+import { getMinutesFrom00hs } from "../utils.ts";
+import { dbGetOpeningHoursByDay } from "../core/opening-hours/opening-hours.dba.ts";
 
-export const bookingFactory = {
-    create: async (obj: CreateBooking) => {
-        const bookingSecret = randomUUID();
-        return dbCreateBooking(obj, bookingSecret);
+export const bookingsFactory = {
+    create: async (overrides: Partial<CreateBooking> = {}) => {
+        let table_id = overrides.table_id;
+
+        if (!table_id) {
+            const table = await tablesFactory.create();
+            table_id = table.id;
+        }
+
+        let booking_date = overrides.booking_date;
+        let booking_start_time = overrides.booking_start_time;
+
+        if (!booking_date) {
+            const bookingDate = Temporal.Now.plainDateISO().add({ days: 1 });
+            booking_date = bookingDate.toString();
+        }
+
+        if (!booking_start_time) {
+            const openingHours = await dbGetOpeningHoursByDay(
+                Temporal.PlainDate.from(booking_date).dayOfWeek % 7,
+            );
+            booking_start_time = openingHours!.opening_time;
+        }
+
+        const data: CreateBooking = {
+            table_id,
+            booking_date,
+            booking_start_time,
+            pax: 2,
+            guest_first_name: "fistName",
+            guest_last_name: "lastName",
+            guest_email: "test@gmail.com",
+            guest_phone: "+4369933334444",
+            status: "CONFIRMED",
+            ...overrides,
+        };
+
+        const secret = randomUUID();
+        return await dbCreateBooking(data, secret);
     },
-    // createDefault: async () => {
-    //     const bookingSecret = randomUUID();
-    //     return dbCreateBooking({
-
-    //     }, bookingSecret);
-    // },
 };
