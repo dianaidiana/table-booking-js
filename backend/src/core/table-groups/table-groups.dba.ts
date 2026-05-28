@@ -1,6 +1,7 @@
 import { getDb } from "../../db-setup.ts";
 import type { PartialWithUndefined } from "../../types-utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
+import db, { SqliteError } from "better-sqlite3";
 
 export interface TableGroup {
     id: number;
@@ -69,11 +70,28 @@ export async function dbUpdateTableGroup(
     );
 }
 
+export class TableGroupHasTablesDeleteError extends Error {
+    public id;
+    constructor(id: number) {
+        super(`Failed to delete table group ${id}; it has associated tables`);
+        this.id = id;
+    }
+}
+
 export async function dbDeleteTableGroup(id: number): Promise<boolean> {
     const db = getDb();
     const stmt = db.prepare<[number], void>(
         "DELETE FROM table_groups WHERE id = ?",
     );
-    const result = stmt.run(id);
-    return result.changes > 0;
+    try {
+        const result = stmt.run(id);
+        return result.changes > 0;
+    } catch (e) {
+        if (e instanceof SqliteError) {
+            if (e.code == "SQLITE_CONSTRAINT_FOREIGNKEY") {
+                throw new TableGroupHasTablesDeleteError(id);
+            }
+        }
+        throw e;
+    }
 }

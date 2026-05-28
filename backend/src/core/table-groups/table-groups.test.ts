@@ -7,14 +7,14 @@ import {
     listTableGroups,
     updateTableGroup,
 } from "./table-groups.service.ts";
-import { factory } from "../../test-factories/seeds.factory.ts";
+import { tableGroupsFactory } from "../../test-factories/table-groups.factory.ts";
+import { tablesFactory } from "../../test-factories/tables.factory.ts";
+import { TableGroupHasTablesDeleteError } from "./table-groups.dba.ts";
 
 describe("table-groups", () => {
     describe("service", () => {
-        let db;
-
         beforeEach(() => {
-            db = initDb(true);
+            initDb(true);
         });
 
         afterEach(() => {
@@ -22,16 +22,18 @@ describe("table-groups", () => {
         });
 
         test("list all", async () => {
-            await factory.createManyDefaultTableGroups(5);
-            const tableGroups = await listTableGroups();
-            expect(tableGroups).toHaveLength(5);
+            const tableGroups = await tableGroupsFactory.createMany(5);
+            const result = await listTableGroups();
+            expect(result).toStrictEqual(tableGroups);
         });
 
         test("get by id", async () => {
-            const tableGroup = await factory.createDefaultTableGroup();
+            const tableGroup = await tableGroupsFactory.create();
             const result = await getTableGroup(tableGroup.id);
             expect(result).toStrictEqual(tableGroup);
+        });
 
+        test("get by unexistent id", async () => {
             const undefinedTableGroup = await getTableGroup(10000);
             expect(undefinedTableGroup).toBeUndefined();
         });
@@ -47,8 +49,8 @@ describe("table-groups", () => {
         });
 
         test("update", async () => {
-            const tableGroup = await factory.createDefaultTableGroup();
-            const newName = tableGroup.name + "adapted";
+            const tableGroup = await tableGroupsFactory.create();
+            const newName = tableGroup.name + " adapted";
             const result = await updateTableGroup(1, {
                 name: newName,
             });
@@ -58,20 +60,32 @@ describe("table-groups", () => {
             });
         });
 
+        test("update unexistent", async () => {
+            await expect(async () => {
+                await updateTableGroup(1, {
+                    name: "asd",
+                });
+            }).rejects.toThrow();
+        });
+
         test("update empty", async () => {
-            const tableGroup = await factory.createDefaultTableGroup();
-            const result = await updateTableGroup(1, {});
+            const tableGroup = await tableGroupsFactory.create();
+            const result = await updateTableGroup(tableGroup.id, {});
             expect(result).toStrictEqual(tableGroup);
         });
 
         test("delete with table", async () => {
-            const { tableGroup } =
-                await factory.createDefaultTableGroupWithTable();
-            await expect(deleteTableGroup(tableGroup.id)).rejects.toThrow();
+            const tableGroup = await tableGroupsFactory.create();
+            const table = await tablesFactory.create({
+                table_group_id: tableGroup.id,
+            });
+            await expect(deleteTableGroup(tableGroup.id)).rejects.instanceOf(
+                TableGroupHasTablesDeleteError,
+            );
         });
 
         test("delete without table", async () => {
-            const tableGroup = await factory.createDefaultTableGroup();
+            const tableGroup = await tableGroupsFactory.create();
             const result = await deleteTableGroup(tableGroup.id);
             expect(result).toBe(true);
         });

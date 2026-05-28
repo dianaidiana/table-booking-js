@@ -1,5 +1,8 @@
 import express from "express";
-import { type CreateTableGroup } from "./table-groups.dba.ts";
+import {
+    TableGroupHasTablesDeleteError,
+    type CreateTableGroup,
+} from "./table-groups.dba.ts";
 import z from "zod";
 import {
     createTableGroup,
@@ -88,11 +91,17 @@ export async function deleteTableGroupController(
     res: express.Response,
 ) {
     const { id } = deleteTableGroupParamsSchema.parse(req.params);
-    const isDeleted = await deleteTableGroup(id);
-
-    if (isDeleted) {
-        res.status(204).end();
-    } else {
-        res.status(404).json({ error: "not found" });
+    try {
+        const isDeleted = await deleteTableGroup(id);
+        if (isDeleted) {
+            res.status(204).end();
+        } else {
+            res.status(404).json({ error: "not found" });
+        }
+    } catch (e) {
+        if (e instanceof TableGroupHasTablesDeleteError) {
+            return res.status(409).json({ error: "group has tables" });
+        }
+        throw e;
     }
 }
