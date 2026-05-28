@@ -1,3 +1,3 @@
-export function getMinutesFrom00hs(date: Date) {
-    return date.getHours() * 60 + date.getMinutes();
+export function getMinutesFrom00hs(time: Temporal.PlainTime) {
+    return time.hour * 60 + time.minute;
 }
