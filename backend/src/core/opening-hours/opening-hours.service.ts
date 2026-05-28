@@ -1,6 +1,6 @@
 import { dbListBookings } from "../bookings/bookings.dba.ts";
 import {
-    dbGetOpeningHoursPerDay,
+    dbGetOpeningHoursByDay,
     dbListOpeningHours,
     dbUpdateOpeningHours,
     type OpeningHours,
@@ -14,7 +14,7 @@ export async function listOpeningHours(): Promise<OpeningHours[]> {
 export async function getOpeningHoursPerDay(
     weekday: number,
 ): Promise<OpeningHours | undefined> {
-    return await dbGetOpeningHoursPerDay(weekday);
+    return await dbGetOpeningHoursByDay(weekday);
 }
 
 export async function updateOpeningHours(

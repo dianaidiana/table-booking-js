@@ -30,7 +30,7 @@ export async function dbListOpeningHours(): Promise<OpeningHours[]> {
     return openingHours.map((oh) => castToOpeningHours(oh));
 }
 
-export async function dbGetOpeningHoursPerDay(
+export async function dbGetOpeningHoursByDay(
     weekday: number,
 ): Promise<OpeningHours | undefined> {
     const db = getDb();
