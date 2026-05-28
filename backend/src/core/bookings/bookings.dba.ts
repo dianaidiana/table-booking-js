@@ -28,9 +28,11 @@ export interface BookingsFilters {
     endDate?: string | undefined;
     weekday?: number | undefined;
     startTime?: number | undefined;
+    endTime?: number | undefined;
     includeCancelled?: boolean | undefined;
     tableId?: number | undefined;
     guestEmail?: string | undefined;
+    exclude?: number | undefined;
 }
 
 export interface CreateBooking extends Omit<
@@ -68,6 +70,8 @@ export async function dbExistsBookings(
     const db = getDb();
     const { setExpr, values } = makeSqlFilterArguments(filters);
 
+    console.log(setExpr);
+
     return (
         db
             .prepare(
@@ -90,9 +94,11 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         endDate,
         weekday,
         startTime,
+        endTime,
         includeCancelled,
         tableId,
         guestEmail,
+        exclude,
     } = filters;
 
     if (specificDate) {
@@ -113,10 +119,26 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         values.push(weekday);
     }
 
+    // startTime and endTime search for intersection
     if (startTime) {
-        setExprs.push("booking_start_time >= ?");
-        values.push(startTime);
+        if (specificDate) {
+            setExprs.push("(booking_start_time + duration_minutes) >= ?");
+            values.push(startTime);
+        } else if (startDate) {
+            setExprs.push(
+                "(booking_date > ? OR (booking_start_time + duration_minutes) >= ?)",
+            );
+            values.push(startDate);
+            values.push(startTime);
+        }
     }
+    if (endTime) {
+        setExprs.push("booking_start_time <= ?");
+        values.push(endTime);
+    }
+
+    //[st,et] int [bst,bet] iff et >= bst && st <= bet
+    // bet = bst + duration
 
     if (!includeCancelled) {
         setExprs.push("status != 'CANCELLED'");
@@ -130,6 +152,11 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
     if (guestEmail !== undefined) {
         setExprs.push("guest_email = ?");
         values.push(guestEmail);
+    }
+
+    if (exclude) {
+        setExprs.push("id != ?");
+        values.push(exclude);
     }
 
     return { setExpr: setExprs.join(" AND "), values };

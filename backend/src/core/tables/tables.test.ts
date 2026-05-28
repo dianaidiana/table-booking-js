@@ -157,8 +157,9 @@ describe("tables", () => {
             const booking = await bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO().toString(),
+                duration_minutes: 2,
                 booking_start_time:
-                    getMinutesFrom00hs(Temporal.Now.plainTimeISO()) - 1,
+                    getMinutesFrom00hs(Temporal.Now.plainTimeISO()) - 5,
             });
 
             expect(

@@ -17,9 +17,11 @@ const filterBookingsBodySchema = z
         endDate: z.iso.date(),
         weekday: z.number().max(6).min(0),
         startTime: z.number().positive(),
+        endTime: z.number().positive(),
         includeCancelled: z.boolean(),
         tableId: z.number().positive(),
         guestEmail: z.email(),
+        exclude: z.number().positive(),
     })
     .strict()
     .partial();

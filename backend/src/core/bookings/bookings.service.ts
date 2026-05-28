@@ -8,6 +8,7 @@ import {
     type CreateBooking,
     type BookingsFilters,
     type UpdateBooking,
+    dbExistsBookings,
 } from "./bookings.dba.ts";
 import { dbGetTable } from "../tables/tables.dba.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
@@ -99,8 +100,8 @@ async function isTableAvailable(
         return false;
     }
 
-    const bookingDate = new Date(hardRequirements.booking_date);
-    const weekday = bookingDate.getDay();
+    const bookingDate = Temporal.PlainDate.from(hardRequirements.booking_date);
+    const weekday = bookingDate.dayOfWeek % 7;
     const openingHours = await dbGetOpeningHoursByDay(weekday);
 
     if (!openingHours || openingHours.is_closed) {
@@ -117,22 +118,11 @@ async function isTableAvailable(
         return false;
     }
 
-    let existingBookings = await dbListBookings({
+    return !(await dbExistsBookings({
         specificDate: hardRequirements.booking_date,
         tableId: hardRequirements.table_id,
-    });
-
-    if (excludeBookingId) {
-        existingBookings = existingBookings.filter(
-            (b) => b.id !== excludeBookingId,
-        );
-    }
-
-    const someHasConflict = existingBookings.some((b) => {
-        const existingStart = b.booking_start_time;
-        const existingEnd = b.booking_start_time + b.duration_minutes;
-        return existingEnd > newStart && existingStart < newEnd;
-    });
-
-    return !someHasConflict;
+        startTime: newStart,
+        endTime: newEnd,
+        exclude: excludeBookingId,
+    }));
 }
