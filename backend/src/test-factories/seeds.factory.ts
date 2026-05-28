@@ -56,13 +56,13 @@ async function createDefaultTableGroupWithManyTables(numberOfTables: number) {
 
 async function createBooking(createBooking: CreateBooking) {
     const bookingSecret = randomUUID();
-    return dbCreateBooking(createBooking, bookingSecret);
+    return await dbCreateBooking(createBooking, bookingSecret);
 }
 
 async function createDefaultTableWithBooking() {
     const { tableGroup, table } = await createDefaultTableGroupWithTable();
     const bookingSecret = randomUUID();
-    const booking = dbCreateBooking(
+    const booking = await dbCreateBooking(
         {
             table_id: table.id,
             booking_date: new Date().toISOString(),

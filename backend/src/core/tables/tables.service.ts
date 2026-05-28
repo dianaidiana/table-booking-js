@@ -1,4 +1,4 @@
-import { dbListBookings } from "../bookings/bookings.dba.ts";
+import { dbExistsBookings, dbListBookings } from "../bookings/bookings.dba.ts";
 import {
     dbCreateTable,
     dbDeleteTable,
@@ -27,7 +27,13 @@ export async function updateTable(
     updateTable: UpdateTable,
 ): Promise<Table> {
     if (updateTable.disabled) {
-        if (await hasConflictingBookings(id)) {
+        if (
+            await dbExistsBookings({
+                tableId: id,
+                startDate: Temporal.Now.plainDateISO().toString(),
+                //startTime
+            })
+        ) {
             throw new Error("Failed to update table: conflicting bookings");
         }
     }
@@ -35,15 +41,16 @@ export async function updateTable(
 }
 
 export async function deleteTable(id: number): Promise<boolean> {
-    if (await hasConflictingBookings(id)) {
+    if (await hasBookings(id)) {
         throw new Error("Failed to delete table: conflicting bookings");
     }
     return await dbDeleteTable(id);
 }
 
-async function hasConflictingBookings(id: number) {
+//TODO: hasBookingsAfter(id, time, date)
+async function hasBookings(id: number) {
     const conflictingBookings = await dbListBookings({
-        specificTableId: id,
+        tableId: id,
     });
 
     return conflictingBookings.length > 0;

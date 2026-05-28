@@ -1,43 +1,34 @@
-import { dbCreateTableGroup } from "../core/table-groups/table-groups.dba.ts";
-import {
-    dbCreateTable,
-    type CreateTable,
-    type Table,
-} from "../core/tables/tables.dba.ts";
+import { dbCreateTable, type CreateTable } from "../core/tables/tables.dba.ts";
+import { tableGroupsFactory } from "./table-groups.factory.ts";
 
-export const tableFactory = {
-    create: async (obj: CreateTable) => {
-        return dbCreateTable(obj);
-    },
-    createDefaultWithTableGroup: async () => {
-        const createTableGroup = { name: "Table Group 1" };
-        const tableGroup = await dbCreateTableGroup(createTableGroup);
+export const tablesFactory = {
+    create: async (overrides: Partial<CreateTable> = {}) => {
+        let table_group_id = overrides.table_group_id;
+        if (!table_group_id) {
+            const tableGroup = await tableGroupsFactory.create();
+            table_group_id = tableGroup.id;
+        }
 
-        const createTable = {
-            table_group_id: 1,
+        return await dbCreateTable({
+            table_group_id,
             table_number: "1",
             capacity: 4,
             disabled: false,
-        };
-        const table = await dbCreateTable(createTable);
-        return { tableGroup: tableGroup, table: table };
+            ...overrides,
+        });
     },
-    createManyDefaultsWithTableGroup: async (numberOfTables: number) => {
-        const createTableGroup = { name: "Table Group 1" };
-        const tableGroup = await dbCreateTableGroup(createTableGroup);
 
-        const tables: Table[] = [];
-        for (let i = 0; i < numberOfTables; i++) {
-            const createTable = {
-                table_group_id: 1,
-                table_number: "" + i,
-                capacity: 4,
-                disabled: false,
-            };
-            const table = await dbCreateTable(createTable);
+    createMany: async (count: number, overrides: Partial<CreateTable> = {}) => {
+        const tables = [];
+        for (let i = 0; i < count; i++) {
+            const table = await tablesFactory.create({
+                table_number: overrides.table_number
+                    ? `${overrides.table_number + i}`
+                    : `${i}`,
+                ...overrides,
+            });
             tables.push(table);
         }
-
-        return { tableGroup: tableGroup, tables: tables };
+        return tables;
     },
 };
