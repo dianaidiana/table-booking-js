@@ -5,11 +5,11 @@ CREATE TABLE IF NOT EXISTS table_groups (
 CREATE TABLE IF NOT EXISTS tables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     table_group_id INTEGER NOT NULL,
-    table_number VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NOT NULL,
     capacity INTEGER NOT NULL,
     disabled BOOLEAN NOT NULL DEFAULT 0, -- 0 for false, 1 for true
     FOREIGN KEY (table_group_id) REFERENCES table_groups(id),
-    UNIQUE(table_number)
+    UNIQUE(name)
 );
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -5,7 +5,7 @@ import { dbPatchHelper } from "../../db-utils.ts";
 export interface Table {
     id: number;
     table_group_id: number;
-    table_number: string;
+    name: string;
     capacity: number;
     disabled: boolean;
 }
@@ -56,8 +56,8 @@ export async function dbCreateTable(createTable: CreateTable): Promise<Table> {
     const db = getDb();
 
     const stmt = db.prepare<CreateTableDb, TableDb>(
-        `INSERT INTO tables (table_group_id, table_number, capacity, disabled) 
-         VALUES (@table_group_id, @table_number, @capacity, @disabled) 
+        `INSERT INTO tables (table_group_id, name, capacity, disabled) 
+         VALUES (@table_group_id, @name, @capacity, @disabled) 
          RETURNING *`,
     );
 
@@ -72,7 +72,7 @@ export async function dbCreateTable(createTable: CreateTable): Promise<Table> {
 
 export async function dbUpdateTable(
     id: number,
-    { table_group_id, table_number, capacity, disabled }: UpdateTable,
+    { table_group_id, name, capacity, disabled }: UpdateTable,
 ): Promise<Table> {
     const db = getDb();
 
@@ -81,7 +81,7 @@ export async function dbUpdateTable(
         id,
         {
             table_group_id,
-            table_number,
+            name,
             capacity,
             disabled,
         },

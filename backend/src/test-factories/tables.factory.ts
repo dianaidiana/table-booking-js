@@ -11,7 +11,7 @@ export const tablesFactory = {
 
         return await dbCreateTable({
             table_group_id,
-            table_number: "1",
+            name: "1",
             capacity: 4,
             disabled: false,
             ...overrides,
@@ -22,9 +22,7 @@ export const tablesFactory = {
         const tables = [];
         for (let i = 0; i < count; i++) {
             const table = await tablesFactory.create({
-                table_number: overrides.table_number
-                    ? `${overrides.table_number + i}`
-                    : `${i}`,
+                name: overrides.name ? `${overrides.name + i}` : `${i}`,
                 ...overrides,
             });
             tables.push(table);

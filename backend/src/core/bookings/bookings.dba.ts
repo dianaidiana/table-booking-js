@@ -70,8 +70,6 @@ export async function dbExistsBookings(
     const db = getDb();
     const { setExpr, values } = makeSqlFilterArguments(filters);
 
-    console.log(setExpr);
-
     return (
         db
             .prepare(

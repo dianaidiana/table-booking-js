@@ -41,7 +41,7 @@ export async function getTableController(
 const createTableBodySchema = z
     .object({
         table_group_id: z.number().positive(),
-        table_number: z.string().nonempty(),
+        name: z.string().nonempty(),
         capacity: z.number().positive(),
         disabled: z.boolean(),
     })

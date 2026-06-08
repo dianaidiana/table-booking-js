@@ -43,14 +43,14 @@ describe("tables", () => {
             const tableGroup = await tableGroupsFactory.create();
             const table = await createTable({
                 table_group_id: tableGroup.id,
-                table_number: "11",
+                name: "11",
                 capacity: 4,
                 disabled: false,
             });
             expect(table).toStrictEqual({
                 id: table.id,
                 table_group_id: tableGroup.id,
-                table_number: "11",
+                name: "11",
                 capacity: 4,
                 disabled: false,
             });
@@ -60,7 +60,7 @@ describe("tables", () => {
             await expect(async () => {
                 await createTable({
                     table_group_id: 1000,
-                    table_number: "11",
+                    name: "11",
                     capacity: 4,
                     disabled: false,
                 });
@@ -73,9 +73,9 @@ describe("tables", () => {
             const id = table.id;
 
             const update1 = await updateTable(id, {
-                table_number: "12",
+                name: "12",
             });
-            expect(update1).toStrictEqual({ ...table, table_number: "12" });
+            expect(update1).toStrictEqual({ ...table, name: "12" });
 
             const otherTableGroup = await tableGroupsFactory.create();
             const update2 = await updateTable(id, {
@@ -100,8 +100,6 @@ describe("tables", () => {
             expect(update).toStrictEqual({ ...table, disabled: true });
         });
 
-        console.log(Temporal.Now.plainDateISO().add({ days: 1 }).toString());
-
         test("disable with future bookings", async () => {
             const table = await tablesFactory.create();
             const booking = await bookingsFactory.create({
@@ -111,7 +109,7 @@ describe("tables", () => {
                     .toString(),
             });
 
-            expect(
+            await expect(
                 async () =>
                     await updateTable(table.id, {
                         disabled: true,
@@ -128,7 +126,7 @@ describe("tables", () => {
                     getMinutesFrom00hs(Temporal.Now.plainTimeISO()) + 1,
             });
 
-            expect(
+            await expect(
                 async () =>
                     await updateTable(table.id, {
                         disabled: true,
@@ -145,7 +143,7 @@ describe("tables", () => {
                     .toString(),
             });
 
-            expect(
+            await expect(
                 await updateTable(table.id, {
                     disabled: true,
                 }),
