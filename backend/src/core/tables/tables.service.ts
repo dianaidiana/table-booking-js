@@ -49,17 +49,16 @@ export async function updateTable(
     return await dbUpdateTable(id, updateTable);
 }
 
-// TODO: evaluate how delete logic should work for tables with old bookings
-export async function deleteTable(id: number): Promise<boolean> {
-    // if (
-    //     await dbExistsBookings({
-    //         tableId: id,
-    //         startDate: Temporal.Now.plainDateISO().toString(),
-    //         startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
-    //     })
-    // ) {
-    //     throw new Error("Failed to delete table: conflicting bookings");
-    // }
-    // return await dbDeleteTable(id);
-    throw new Error("not implemented");
+export async function deleteTable(id: number): Promise<Boolean> {
+    if (
+        await dbExistsBookings({
+            tableId: id,
+            startDate: Temporal.Now.plainDateISO().toString(),
+            startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
+        })
+    ) {
+        throw new TableHasBookingsUpdateError(id);
+    }
+
+    return await dbDeleteTable(id);
 }

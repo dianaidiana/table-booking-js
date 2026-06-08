@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS tables (
     name VARCHAR(50) NOT NULL,
     capacity INTEGER NOT NULL,
     disabled BOOLEAN NOT NULL DEFAULT 0, -- 0 for false, 1 for true
+    deleted_at TIMESTAMP,
     FOREIGN KEY (table_group_id) REFERENCES table_groups(id),
     UNIQUE(name)
 );

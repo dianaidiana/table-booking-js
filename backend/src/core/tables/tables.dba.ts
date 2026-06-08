@@ -8,11 +8,12 @@ export interface Table {
     name: string;
     capacity: number;
     disabled: boolean;
+    deleted_at: string;
 }
 
 type TableDb = ToDb<Table>;
 
-export type CreateTable = Omit<Table, "id">;
+export type CreateTable = Omit<Table, "id" | "deleted_at">;
 type CreateTableDb = ToDb<CreateTable>;
 
 export type UpdateTable = PartialWithUndefined<CreateTable>;
@@ -36,7 +37,9 @@ function castCreateTableToCreateTableDb(
 
 export async function dbListTables(): Promise<Table[]> {
     const db = getDb();
-    const tables = db.prepare<[], TableDb>("SELECT * FROM tables").all();
+    const tables = db
+        .prepare<[], TableDb>("SELECT * FROM tables WHERE deleted_at IS NULL")
+        .all();
 
     return tables.map((table) => castTableDbToTable(table));
 }
@@ -44,7 +47,10 @@ export async function dbListTables(): Promise<Table[]> {
 export async function dbGetTable(id: number): Promise<Table | undefined> {
     const db = getDb();
     const table = db
-        .prepare<[number], TableDb>("SELECT * FROM tables WHERE id = ?")
+        .prepare<
+            [number],
+            TableDb
+        >("SELECT * FROM tables WHERE id = ? AND deleted_at IS NULL")
         .get(id);
 
     if (table) {
@@ -94,9 +100,12 @@ export async function dbUpdateTable(
     return castTableDbToTable(out);
 }
 
-export async function dbDeleteTable(id: number): Promise<boolean> {
+export async function dbDeleteTable(id: number): Promise<Boolean> {
     const db = getDb();
-    const stmt = db.prepare<[number], void>("DELETE FROM tables WHERE id = ?");
+    const stmt = db.prepare<[number], Table>(
+        "UPDATE tables SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?",
+    );
     const result = stmt.run(id);
     return result.changes > 0;
+    // TODO: should I return the deleted table or should I keep the true/false logic?
 }
