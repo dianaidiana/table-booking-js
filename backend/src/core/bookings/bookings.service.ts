@@ -27,7 +27,7 @@ export async function getBooking(id: number): Promise<Booking | undefined> {
 export async function createBooking(
     createBooking: CreateBooking,
 ): Promise<Booking> {
-    const isAvailable = await isTableAvailable({
+    const isAvailable = await isTableFitForBooking({
         table_id: createBooking.table_id,
         booking_date: createBooking.booking_date,
         duration_minutes:
@@ -73,7 +73,7 @@ export async function updateBooking(
             pax: updateBooking.pax ?? currentBooking.booking_start_time,
         };
 
-        const isAvailable = await isTableAvailable(hardRequirements, id);
+        const isAvailable = await isTableFitForBooking(hardRequirements, id);
 
         if (!isAvailable) {
             throw new Error("Failed to update booking: table not available");
@@ -91,12 +91,17 @@ interface HardRequirements {
     pax: number;
 }
 
-async function isTableAvailable(
+async function isTableFitForBooking(
     hardRequirements: HardRequirements,
     excludeBookingId?: number,
 ) {
     const table = await dbGetTable(hardRequirements.table_id);
-    if (!table || table.disabled || table.capacity < hardRequirements.pax) {
+    if (
+        !table ||
+        table.disabled ||
+        table.capacity < hardRequirements.pax ||
+        table.deleted_at != null
+    ) {
         return false;
     }
 

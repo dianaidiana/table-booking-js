@@ -112,9 +112,9 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
         values.push(endDate);
     }
 
-    if (weekday) {
+    if (weekday !== undefined) {
         setExprs.push("strftime('%w', booking_date) = ?");
-        values.push(weekday);
+        values.push(String(weekday));
     }
 
     // startTime and endTime search for intersection
