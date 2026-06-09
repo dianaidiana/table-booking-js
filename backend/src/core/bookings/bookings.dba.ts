@@ -118,25 +118,30 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
     }
 
     // startTime and endTime search for intersection
+    //[st,et] int [bst,bet] iff et >= bst && st <= bet
+    // bet = bst + duration
     if (startTime) {
         if (specificDate) {
-            setExprs.push("(booking_start_time + duration_minutes) >= ?");
+            setExprs.push("(booking_start_time + duration_minutes) > ?");
             values.push(startTime);
         } else if (startDate) {
             setExprs.push(
-                "(booking_date > ? OR (booking_start_time + duration_minutes) >= ?)",
+                "(booking_date > ? OR (booking_start_time + duration_minutes) > ?)",
             );
             values.push(startDate);
             values.push(startTime);
         }
     }
     if (endTime) {
-        setExprs.push("booking_start_time <= ?");
-        values.push(endTime);
+        if (specificDate) {
+            setExprs.push("booking_start_time < ?");
+            values.push(endTime);
+        } else if (endDate) {
+            setExprs.push("(booking_date < ? OR booking_start_time < ?)");
+            values.push(endDate);
+            values.push(endTime);
+        }
     }
-
-    //[st,et] int [bst,bet] iff et >= bst && st <= bet
-    // bet = bst + duration
 
     if (!includeCancelled) {
         setExprs.push("status != 'CANCELLED'");
