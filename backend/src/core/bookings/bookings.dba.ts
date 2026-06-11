@@ -2,7 +2,7 @@ import { getDb } from "../../db-setup.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
 import type { PartialWithUndefined } from "../../types-utils.ts";
-import type { UUID } from "crypto";
+import type { UUIDTypes } from "uuid";
 import { getMinutesFrom00hs } from "../../utils.ts";
 
 export interface Booking {
@@ -118,7 +118,7 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
     }
 
     // startTime and endTime search for intersection
-    //[st,et] int [bst,bet] iff et >= bst && st <= bet
+    //[st,et] int [bst,bet] iff et > bst && st < bet
     // bet = bst + duration
     if (startTime) {
         if (specificDate) {
@@ -176,7 +176,7 @@ export async function dbGetBooking(id: number): Promise<Booking | undefined> {
 
 export async function dbCreateBooking(
     createBooking: CreateBooking,
-    bookingSecret: UUID,
+    bookingSecret: UUIDTypes,
 ): Promise<Booking> {
     const db = getDb();
 

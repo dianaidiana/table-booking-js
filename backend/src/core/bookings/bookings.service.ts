@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import {
     dbCreateBooking,
     dbGetBooking,
@@ -27,7 +27,7 @@ export async function getBooking(id: number): Promise<Booking | undefined> {
 export async function createBooking(
     createBooking: CreateBooking,
 ): Promise<Booking> {
-    const isAvailable = await isTableFitForBooking({
+    const canBook = await canBookTable({
         table_id: createBooking.table_id,
         booking_date: createBooking.booking_date,
         duration_minutes:
@@ -37,11 +37,11 @@ export async function createBooking(
         pax: createBooking.pax,
     });
 
-    if (!isAvailable) {
+    if (!canBook) {
         throw new Error("Failed to create booking: table not available");
     }
 
-    const bookingSecret = randomUUID();
+    const bookingSecret = uuidv4().toString();
     return await dbCreateBooking(createBooking, bookingSecret);
 }
 
@@ -70,12 +70,12 @@ export async function updateBooking(
             booking_start_time:
                 updateBooking.booking_start_time ??
                 currentBooking.booking_start_time,
-            pax: updateBooking.pax ?? currentBooking.booking_start_time,
+            pax: updateBooking.pax ?? currentBooking.pax,
         };
 
-        const isAvailable = await isTableFitForBooking(hardRequirements, id);
+        const canBook = await canBookTable(hardRequirements, id);
 
-        if (!isAvailable) {
+        if (!canBook) {
             throw new Error("Failed to update booking: table not available");
         }
     }
@@ -91,7 +91,7 @@ interface HardRequirements {
     pax: number;
 }
 
-async function isTableFitForBooking(
+async function canBookTable(
     hardRequirements: HardRequirements,
     excludeBookingId?: number,
 ) {
