@@ -9,7 +9,6 @@ import {
     updateBooking,
 } from "./bookings.service.ts";
 import { getMinutesFrom00hs } from "../../utils.ts";
-import { dbDeleteTable } from "../tables/tables.dba.ts";
 import { deleteTable, updateTable } from "../tables/tables.service.ts";
 import { updateOpeningHours } from "../opening-hours/opening-hours.service.ts";
 import { validate as uuidValidate } from "uuid";
@@ -594,12 +593,10 @@ describe("bookings", () => {
             test("on a closed day", async () => {
                 const table = await tablesFactory.create();
                 const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-                const settings = await updateOpeningHours(
+                const openingHours = await updateOpeningHours(
                     tomorrow.dayOfWeek % 7,
                     { is_closed: true },
                 );
-                const result = await dbDeleteTable(table.id);
-                expect(result).toBe(true);
                 await expect(async () => {
                     await createBooking({
                         table_id: table.id,
@@ -620,7 +617,7 @@ describe("bookings", () => {
             test("starting before opening_time", async () => {
                 const table = await tablesFactory.create();
                 const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-                const settings = await updateOpeningHours(
+                const openingHours = await updateOpeningHours(
                     tomorrow.dayOfWeek % 7,
                     {
                         opening_time: getMinutesFrom00hs(
@@ -628,8 +625,6 @@ describe("bookings", () => {
                         ),
                     },
                 );
-                const result = await dbDeleteTable(table.id);
-                expect(result).toBe(true);
                 await expect(async () => {
                     await createBooking({
                         table_id: table.id,
@@ -650,7 +645,7 @@ describe("bookings", () => {
             test("ending after closing_time", async () => {
                 const table = await tablesFactory.create();
                 const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-                const settings = await updateOpeningHours(
+                const openingHours = await updateOpeningHours(
                     tomorrow.dayOfWeek % 7,
                     {
                         closing_time: getMinutesFrom00hs(
@@ -658,8 +653,6 @@ describe("bookings", () => {
                         ),
                     },
                 );
-                const result = await dbDeleteTable(table.id);
-                expect(result).toBe(true);
                 await expect(async () => {
                     await createBooking({
                         table_id: table.id,
@@ -782,6 +775,12 @@ describe("bookings", () => {
         });
 
         describe("update", () => {
+            test("unexistent booking", async () => {
+                await expect(async () => {
+                    await updateBooking(10000, { duration_minutes: 60 });
+                }).rejects.toThrow();
+            });
+
             test("to unexistent table_id", async () => {
                 const booking = await bookingsFactory.create();
                 await expect(async () => {
@@ -820,6 +819,253 @@ describe("bookings", () => {
                         table_id: tableBelowCapacity.id,
                     });
                 }).rejects.toThrow();
+            });
+
+            test("with table deleted", async () => {
+                const tables = await tablesFactory.createMany(2);
+                const result = await deleteTable(tables[0]!.id);
+                expect(result).toBe(true);
+                const booking = await bookingsFactory.create({
+                    table_id: tables[1]!.id,
+                });
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        table_id: tables[0]!.id,
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("on a closed day", async () => {
+                const table = await tablesFactory.create();
+                const today = Temporal.Now.plainDateTimeISO();
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: today.toString(),
+                });
+                const tomorrow = today.add({
+                    days: 1,
+                });
+                const openingHours = await updateOpeningHours(
+                    tomorrow.dayOfWeek % 7,
+                    { is_closed: true },
+                );
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        booking_date: tomorrow.toString(),
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("starting before opening_time", async () => {
+                const table = await tablesFactory.create();
+                const tomorrow = Temporal.Now.plainDateISO().add({
+                    days: 1,
+                });
+                const openingHours = await updateOpeningHours(
+                    tomorrow.dayOfWeek % 7,
+                    {
+                        opening_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(12, 0),
+                        ),
+                    },
+                );
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(13, 0),
+                    ),
+                });
+
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        booking_start_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(9, 0),
+                        ),
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("ending after closing_time", async () => {
+                const table = await tablesFactory.create();
+                const tomorrow = Temporal.Now.plainDateISO().add({
+                    days: 1,
+                });
+                const openingHours = await updateOpeningHours(
+                    tomorrow.dayOfWeek % 7,
+                    {
+                        closing_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(12, 0),
+                        ),
+                    },
+                );
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(9, 0),
+                    ),
+                });
+
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        booking_start_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(11, 0),
+                        ),
+                        duration_minutes: 120,
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("overlapping booking already exists starting before booking_starting_time", async () => {
+                const table = await tablesFactory.create();
+                const today = Temporal.Now.plainDateISO();
+                const tomorrow = today.add({
+                    days: 1,
+                });
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: today.toString(),
+                });
+                const existingBooking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(11, 0),
+                    ),
+                    duration_minutes: 120,
+                });
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        booking_date: tomorrow.toString(),
+                        booking_start_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(12, 0),
+                        ),
+                        duration_minutes: 120,
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("overlapping booking already exists starting after booking_starting_time", async () => {
+                const table = await tablesFactory.create();
+                const today = Temporal.Now.plainDateISO();
+                const tomorrow = today.add({
+                    days: 1,
+                });
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: today.toString(),
+                });
+                const existingBooking = bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(11, 0),
+                    ),
+                    duration_minutes: 120,
+                });
+                await expect(async () => {
+                    await updateBooking(booking.id, {
+                        booking_date: tomorrow.toString(),
+                        booking_start_time: getMinutesFrom00hs(
+                            new Temporal.PlainTime(10, 0),
+                        ),
+                        duration_minutes: 120,
+                    });
+                }).rejects.toThrow();
+            });
+
+            test("with no conflicts", async () => {
+                const table = await tablesFactory.create();
+                const tomorrow = Temporal.Now.plainDateISO().add({
+                    days: 1,
+                });
+                const startTime = getMinutesFrom00hs(
+                    new Temporal.PlainTime(10, 0),
+                );
+                const booking = await bookingsFactory.create({
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: startTime,
+                    duration_minutes: 120,
+                    pax: 3,
+                    guest_first_name: "John",
+                    guest_last_name: "Doe",
+                    guest_email: "example@example.com",
+                    guest_phone: "+4369955556666",
+                    status: "PENDING",
+                });
+                const updatedBooking = await updateBooking(booking.id, {
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: startTime,
+                    duration_minutes: 124,
+                    pax: 3,
+                    guest_first_name: "John",
+                    guest_last_name: "Doe",
+                    guest_email: "example@example.com",
+                    guest_phone: "+4369955556666",
+                    status: "PENDING",
+                });
+                const now = Temporal.Now.plainDateTimeISO().toString();
+                expect(uuidValidate(booking.booking_secret)).toBe(true);
+                expect(
+                    Temporal.PlainDateTime.compare(
+                        now,
+                        Temporal.PlainDateTime.from(booking.created_at),
+                    ),
+                ).toBeGreaterThanOrEqual(0);
+                expect(updatedBooking).toStrictEqual({
+                    id: booking.id,
+                    table_id: table.id,
+                    booking_date: tomorrow.toString(),
+                    booking_start_time: startTime,
+                    duration_minutes: 124,
+                    pax: 3,
+                    guest_first_name: "John",
+                    guest_last_name: "Doe",
+                    guest_email: "example@example.com",
+                    guest_phone: "+4369955556666",
+                    status: "PENDING",
+                    special_requests: null,
+                    created_at: booking.created_at,
+                    booking_secret: booking.booking_secret,
+                });
+            });
+
+            test("with no hard requirements", async () => {
+                const booking = await bookingsFactory.create();
+                const updatedBooking = await updateBooking(booking.id, {
+                    guest_first_name: "Diana",
+                    guest_last_name: "Example",
+                    guest_email: "example@example.com",
+                    guest_phone: "+4369955556666",
+                    status: "PENDING",
+                });
+                const now = Temporal.Now.plainDateTimeISO().toString();
+                expect(uuidValidate(booking.booking_secret)).toBe(true);
+                expect(
+                    Temporal.PlainDateTime.compare(
+                        now,
+                        Temporal.PlainDateTime.from(booking.created_at),
+                    ),
+                ).toBeGreaterThanOrEqual(0);
+                expect(updatedBooking).toStrictEqual({
+                    id: booking.id,
+                    table_id: booking.id,
+                    booking_date: booking.booking_date,
+                    booking_start_time: booking.booking_start_time,
+                    duration_minutes: booking.duration_minutes,
+                    pax: booking.pax,
+                    guest_first_name: "Diana",
+                    guest_last_name: "Example",
+                    guest_email: "example@example.com",
+                    guest_phone: "+4369955556666",
+                    status: "PENDING",
+                    special_requests: null,
+                    created_at: booking.created_at,
+                    booking_secret: booking.booking_secret,
+                });
             });
         });
     });

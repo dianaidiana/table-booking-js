@@ -5,6 +5,8 @@ import {
     getOpeningHoursByDay,
     updateOpeningHours,
 } from "./opening-hours.service.ts";
+import { bookingsFactory } from "../../test-factories/bookings.factory.ts";
+import { getMinutesFrom00hs } from "../../utils.ts";
 
 describe("opening hours", () => {
     describe("service", () => {
@@ -55,6 +57,76 @@ describe("opening hours", () => {
             const originalOpeningHours = await getOpeningHoursByDay(3);
             const updated = await updateOpeningHours(3, {});
             expect(updated).toStrictEqual(originalOpeningHours);
+        });
+
+        test("update to is_closed:true with upcoming bookings conflicting", async () => {
+            const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
+            const openingHours = await updateOpeningHours(
+                tomorrow.dayOfWeek % 7,
+                {
+                    is_closed: false,
+                },
+            );
+            const upcomingBooking = await bookingsFactory.create({
+                booking_date: tomorrow.toString(),
+                booking_start_time: getMinutesFrom00hs(
+                    new Temporal.PlainTime(11, 0),
+                ),
+                duration_minutes: 120,
+            });
+            await expect(async () => {
+                await updateOpeningHours(openingHours.weekday, {
+                    is_closed: true,
+                });
+            }).rejects.toThrow();
+        });
+
+        test("update openingTime with upcoming bookings conflicting", async () => {
+            const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
+            const openingHours = await updateOpeningHours(
+                tomorrow.dayOfWeek % 7,
+                {
+                    is_closed: false,
+                },
+            );
+            const upcomingBooking = await bookingsFactory.create({
+                booking_date: tomorrow.toString(),
+                booking_start_time: getMinutesFrom00hs(
+                    new Temporal.PlainTime(11, 0),
+                ),
+                duration_minutes: 120,
+            });
+            await expect(async () => {
+                await updateOpeningHours(openingHours.weekday, {
+                    opening_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(12, 0),
+                    ),
+                });
+            }).rejects.toThrow();
+        });
+
+        test("update to closingTime with upcoming bookings conflicting", async () => {
+            const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
+            const openingHours = await updateOpeningHours(
+                tomorrow.dayOfWeek % 7,
+                {
+                    is_closed: false,
+                },
+            );
+            const upcomingBooking = await bookingsFactory.create({
+                booking_date: tomorrow.toString(),
+                booking_start_time: getMinutesFrom00hs(
+                    new Temporal.PlainTime(11, 0),
+                ),
+                duration_minutes: 120,
+            });
+            await expect(async () => {
+                await updateOpeningHours(openingHours.weekday, {
+                    closing_time: getMinutesFrom00hs(
+                        new Temporal.PlainTime(12, 0),
+                    ),
+                });
+            }).rejects.toThrow();
         });
     });
 });
