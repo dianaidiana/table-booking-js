@@ -11,29 +11,25 @@ import {
     type UpdateTableGroup,
 } from "./table-groups.dba.ts";
 
-export async function listTableGroups(): Promise<TableGroup[]> {
-    return await dbListTableGroups();
+export function listTableGroups(): TableGroup[] {
+    return dbListTableGroups();
 }
 
-export async function getTableGroup(
-    id: number,
-): Promise<TableGroup | undefined> {
-    return await dbGetTableGroup(id);
+export function getTableGroup(id: number): TableGroup | undefined {
+    return dbGetTableGroup(id);
 }
 
-export async function createTableGroup({
-    name,
-}: CreateTableGroup): Promise<TableGroup> {
-    return await dbCreateTableGroup({ name });
+export function createTableGroup({ name }: CreateTableGroup): TableGroup {
+    return dbCreateTableGroup({ name });
 }
 
-export async function updateTableGroup(
+export function updateTableGroup(
     id: number,
     { name }: UpdateTableGroup,
-): Promise<TableGroup> {
-    return await dbUpdateTableGroup(id, { name });
+): TableGroup {
+    return dbUpdateTableGroup(id, { name });
 }
 
-export async function deleteTableGroup(id: number): Promise<boolean> {
-    return await dbDeleteTableGroup(id);
+export function deleteTableGroup(id: number): boolean {
+    return dbDeleteTableGroup(id);
 }

@@ -14,19 +14,19 @@ type Check = Assert<
     Equal<z.infer<typeof updateSettingsBodySchema>, PartialSettings>
 >;
 
-export async function getSettingsController(
+export function getSettingsController(
     req: express.Request,
     res: express.Response,
 ) {
-    const settings = await getSettings();
+    const settings = getSettings();
     res.status(200).json(settings);
 }
 
-export async function updateSettingsController(
+export function updateSettingsController(
     req: express.Request,
     res: express.Response,
 ) {
     const partialSettings = updateSettingsBodySchema.parse(req.body);
 
-    res.status(200).json(await updateSettings(partialSettings));
+    res.status(200).json(updateSettings(partialSettings));
 }

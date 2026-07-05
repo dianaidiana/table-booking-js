@@ -18,13 +18,13 @@ describe("opening hours", () => {
             closeDb();
         });
 
-        test("list all", async () => {
-            const openingHours = await listOpeningHours();
+        test("list all", () => {
+            const openingHours = listOpeningHours();
             expect(openingHours).toHaveLength(7);
         });
 
-        test("get by weekday", async () => {
-            const openingHours = await getOpeningHoursByDay(0); // Sunday
+        test("get by weekday", () => {
+            const openingHours = getOpeningHoursByDay(0); // Sunday
             expect(openingHours).toStrictEqual({
                 weekday: 0,
                 opening_time: "09:00",
@@ -32,101 +32,92 @@ describe("opening hours", () => {
                 is_closed: false,
             });
 
-            const nonexistantOpeningHours = await getOpeningHoursByDay(7); // Invalid weekday
+            const nonexistantOpeningHours = getOpeningHoursByDay(7); // Invalid weekday
             expect(nonexistantOpeningHours).toBeUndefined();
         });
 
-        test("update", async () => {
-            const updated1 = await updateOpeningHours(1, {
+        test("update", () => {
+            const updated1 = updateOpeningHours(1, {
                 opening_time: 300,
             });
             expect(updated1.opening_time).toBe(300);
 
-            const updated2 = await updateOpeningHours(2, {
+            const updated2 = updateOpeningHours(2, {
                 closing_time: 1000,
             });
             expect(updated2.closing_time).toBe(1000);
 
-            const updated3 = await updateOpeningHours(2, {
+            const updated3 = updateOpeningHours(2, {
                 is_closed: true,
             });
             expect(updated3.is_closed).toBe(true);
         });
 
-        test("update empty", async () => {
-            const originalOpeningHours = await getOpeningHoursByDay(3);
-            const updated = await updateOpeningHours(3, {});
+        test("update empty", () => {
+            const originalOpeningHours = getOpeningHoursByDay(3);
+            const updated = updateOpeningHours(3, {});
             expect(updated).toStrictEqual(originalOpeningHours);
         });
 
-        test("update to is_closed:true with upcoming bookings conflicting", async () => {
+        test("update to is_closed:true with upcoming bookings conflicting", () => {
             const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-            const openingHours = await updateOpeningHours(
-                tomorrow.dayOfWeek % 7,
-                {
-                    is_closed: false,
-                },
-            );
-            const upcomingBooking = await bookingsFactory.create({
+            const openingHours = updateOpeningHours(tomorrow.dayOfWeek % 7, {
+                is_closed: false,
+            });
+            const upcomingBooking = bookingsFactory.create({
                 booking_date: tomorrow.toString(),
                 booking_start_time: getMinutesFrom00hs(
                     new Temporal.PlainTime(11, 0),
                 ),
                 duration_minutes: 120,
             });
-            await expect(async () => {
-                await updateOpeningHours(openingHours.weekday, {
+            expect(() => {
+                updateOpeningHours(openingHours.weekday, {
                     is_closed: true,
                 });
-            }).rejects.toThrow();
+            }).toThrow();
         });
 
-        test("update openingTime with upcoming bookings conflicting", async () => {
+        test("update openingTime with upcoming bookings conflicting", () => {
             const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-            const openingHours = await updateOpeningHours(
-                tomorrow.dayOfWeek % 7,
-                {
-                    is_closed: false,
-                },
-            );
-            const upcomingBooking = await bookingsFactory.create({
+            const openingHours = updateOpeningHours(tomorrow.dayOfWeek % 7, {
+                is_closed: false,
+            });
+            const upcomingBooking = bookingsFactory.create({
                 booking_date: tomorrow.toString(),
                 booking_start_time: getMinutesFrom00hs(
                     new Temporal.PlainTime(11, 0),
                 ),
                 duration_minutes: 120,
             });
-            await expect(async () => {
-                await updateOpeningHours(openingHours.weekday, {
+            expect(() => {
+                updateOpeningHours(openingHours.weekday, {
                     opening_time: getMinutesFrom00hs(
                         new Temporal.PlainTime(12, 0),
                     ),
                 });
-            }).rejects.toThrow();
+            }).toThrow();
         });
 
-        test("update to closingTime with upcoming bookings conflicting", async () => {
+        test("update to closingTime with upcoming bookings conflicting", () => {
             const tomorrow = Temporal.Now.plainDateISO().add({ days: 1 });
-            const openingHours = await updateOpeningHours(
-                tomorrow.dayOfWeek % 7,
-                {
-                    is_closed: false,
-                },
-            );
-            const upcomingBooking = await bookingsFactory.create({
+            const openingHours = updateOpeningHours(tomorrow.dayOfWeek % 7, {
+                is_closed: false,
+            });
+            const upcomingBooking = bookingsFactory.create({
                 booking_date: tomorrow.toString(),
                 booking_start_time: getMinutesFrom00hs(
                     new Temporal.PlainTime(11, 0),
                 ),
                 duration_minutes: 120,
             });
-            await expect(async () => {
-                await updateOpeningHours(openingHours.weekday, {
+            expect(() => {
+                updateOpeningHours(openingHours.weekday, {
                     closing_time: getMinutesFrom00hs(
                         new Temporal.PlainTime(12, 0),
                     ),
                 });
-            }).rejects.toThrow();
+            }).toThrow();
         });
     });
 });

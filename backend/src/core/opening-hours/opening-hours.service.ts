@@ -7,21 +7,21 @@ import {
     type UpdateOpeningHours,
 } from "./opening-hours.dba.ts";
 
-export async function listOpeningHours(): Promise<OpeningHours[]> {
-    return await dbListOpeningHours();
+export function listOpeningHours(): OpeningHours[] {
+    return dbListOpeningHours();
 }
 
-export async function getOpeningHoursByDay(
+export function getOpeningHoursByDay(
     weekday: number,
-): Promise<OpeningHours | undefined> {
-    return await dbGetOpeningHoursByDay(weekday);
+): OpeningHours | undefined {
+    return dbGetOpeningHoursByDay(weekday);
 }
 
-export async function updateOpeningHours(
+export function updateOpeningHours(
     weekday: number,
     updateOpeningHours: UpdateOpeningHours,
-): Promise<OpeningHours> {
-    const upcomingBookingsOnWeekday = await dbListBookings({
+): OpeningHours {
+    const upcomingBookingsOnWeekday = dbListBookings({
         weekday: weekday,
     });
 
@@ -58,5 +58,5 @@ export async function updateOpeningHours(
         }
     }
 
-    return await dbUpdateOpeningHours(weekday, updateOpeningHours);
+    return dbUpdateOpeningHours(weekday, updateOpeningHours);
 }

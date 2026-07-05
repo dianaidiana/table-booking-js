@@ -10,11 +10,11 @@ import z from "zod";
 import type { CreateTable } from "./tables.dba.ts";
 import type { Assert, Equal } from "../../types-utils.ts";
 
-export async function listTablesController(
+export function listTablesController(
     req: express.Request,
     res: express.Response,
 ) {
-    const tables = await listTables();
+    const tables = listTables();
     res.status(200).json(tables);
 }
 
@@ -24,13 +24,13 @@ const getTableParamsSchema = z
     })
     .strict();
 
-export async function getTableController(
+export function getTableController(
     req: express.Request,
     res: express.Response,
 ) {
     const { id } = getTableParamsSchema.parse(req.params);
 
-    const table = await getTable(id);
+    const table = getTable(id);
     if (!table) {
         res.status(404).json({ error: "not found" });
     }
@@ -49,13 +49,13 @@ const createTableBodySchema = z
 
 type Check = Assert<Equal<z.infer<typeof createTableBodySchema>, CreateTable>>;
 
-export async function createTableController(
+export function createTableController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = createTableBodySchema.parse(req.body);
 
-    const table = await createTable(body);
+    const table = createTable(body);
 
     res.status(200).json(table);
 }
@@ -67,13 +67,13 @@ const updateTableParamsSchema = z
     })
     .strict();
 
-export async function updateTableController(
+export function updateTableController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = updateTableBodySchema.parse(req.body);
     const { id } = updateTableParamsSchema.parse(req.params);
-    const table = await updateTable(id, body);
+    const table = updateTable(id, body);
 
     res.status(200).json(table);
 }
@@ -84,12 +84,12 @@ const deleteTableParamsSchema = z
     })
     .strict();
 
-export async function deleteTableController(
+export function deleteTableController(
     req: express.Request,
     res: express.Response,
 ) {
     const { id } = deleteTableParamsSchema.parse(req.params);
-    const isDeleted = await deleteTable(id);
+    const isDeleted = deleteTable(id);
 
     if (isDeleted) {
         res.status(204).end();

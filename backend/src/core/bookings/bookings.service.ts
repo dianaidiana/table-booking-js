@@ -14,25 +14,20 @@ import { dbGetTable } from "../tables/tables.dba.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 
-export async function listBookings(
-    filters: BookingsFilters,
-): Promise<Booking[]> {
-    return await dbListBookings(filters);
+export function listBookings(filters: BookingsFilters): Booking[] {
+    return dbListBookings(filters);
 }
 
-export async function getBooking(id: number): Promise<Booking | undefined> {
-    return await dbGetBooking(id);
+export function getBooking(id: number): Booking | undefined {
+    return dbGetBooking(id);
 }
 
-export async function createBooking(
-    createBooking: CreateBooking,
-): Promise<Booking> {
-    const canBook = await canBookTable({
+export function createBooking(createBooking: CreateBooking): Booking {
+    const canBook = canBookTable({
         table_id: createBooking.table_id,
         booking_date: createBooking.booking_date,
         duration_minutes:
-            createBooking.duration_minutes ??
-            (await dbGetSettings()).booking_duration,
+            createBooking.duration_minutes ?? dbGetSettings().booking_duration,
         booking_start_time: createBooking.booking_start_time,
         pax: createBooking.pax,
     });
@@ -42,20 +37,20 @@ export async function createBooking(
     }
 
     const bookingSecret = uuidv4().toString();
-    return await dbCreateBooking(createBooking, bookingSecret);
+    return dbCreateBooking(createBooking, bookingSecret);
 }
 
-export async function updateBooking(
+export function updateBooking(
     id: number,
     updateBooking: UpdateBooking,
-): Promise<Booking> {
+): Booking {
     if (
         updateBooking.table_id ||
         updateBooking.booking_date ||
         updateBooking.booking_start_time ||
         updateBooking.duration_minutes
     ) {
-        const currentBooking = await dbGetBooking(id);
+        const currentBooking = dbGetBooking(id);
         if (!currentBooking) {
             throw new Error("Failed to update booking");
         }
@@ -73,14 +68,14 @@ export async function updateBooking(
             pax: updateBooking.pax ?? currentBooking.pax,
         };
 
-        const canBook = await canBookTable(hardRequirements, id);
+        const canBook = canBookTable(hardRequirements, id);
 
         if (!canBook) {
             throw new Error("Failed to update booking: table not available");
         }
     }
 
-    return await dbUpdateBooking(id, updateBooking);
+    return dbUpdateBooking(id, updateBooking);
 }
 
 interface HardRequirements {
@@ -91,11 +86,11 @@ interface HardRequirements {
     pax: number;
 }
 
-async function canBookTable(
+function canBookTable(
     hardRequirements: HardRequirements,
     excludeBookingId?: number,
 ) {
-    const table = await dbGetTable(hardRequirements.table_id);
+    const table = dbGetTable(hardRequirements.table_id);
     if (
         !table ||
         table.disabled ||
@@ -107,7 +102,7 @@ async function canBookTable(
 
     const bookingDate = Temporal.PlainDate.from(hardRequirements.booking_date);
     const weekday = bookingDate.dayOfWeek % 7;
-    const openingHours = await dbGetOpeningHoursByDay(weekday);
+    const openingHours = dbGetOpeningHoursByDay(weekday);
 
     if (!openingHours || openingHours.is_closed) {
         return false;
@@ -123,11 +118,11 @@ async function canBookTable(
         return false;
     }
 
-    return !(await dbExistsBookings({
+    return !dbExistsBookings({
         specificDate: hardRequirements.booking_date,
         tableId: hardRequirements.table_id,
         startTime: newStart,
         endTime: newEnd,
         exclude: excludeBookingId,
-    }));
+    });
 }

@@ -4,15 +4,14 @@ import {
     type CreateBooking,
 } from "../core/bookings/bookings.dba.ts";
 import { tablesFactory } from "./tables.factory.ts";
-import { getMinutesFrom00hs } from "../utils.ts";
 import { dbGetOpeningHoursByDay } from "../core/opening-hours/opening-hours.dba.ts";
 
 export const bookingsFactory = {
-    create: async (overrides: Partial<CreateBooking> = {}) => {
+    create: (overrides: Partial<CreateBooking> = {}) => {
         let table_id = overrides.table_id;
 
         if (!table_id) {
-            const table = await tablesFactory.create();
+            const table = tablesFactory.create();
             table_id = table.id;
         }
 
@@ -25,7 +24,7 @@ export const bookingsFactory = {
         }
 
         if (!booking_start_time) {
-            const openingHours = await dbGetOpeningHoursByDay(
+            const openingHours = dbGetOpeningHoursByDay(
                 Temporal.PlainDate.from(booking_date).dayOfWeek % 7,
             );
             booking_start_time = openingHours!.opening_time;
@@ -45,6 +44,6 @@ export const bookingsFactory = {
         };
 
         const secret = randomUUID();
-        return await dbCreateBooking(data, secret);
+        return dbCreateBooking(data, secret);
     },
 };

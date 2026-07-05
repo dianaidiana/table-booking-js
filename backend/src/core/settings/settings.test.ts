@@ -8,23 +8,23 @@ beforeAll(() => {
 
 describe("settings", () => {
     describe("service", () => {
-        test("get", async () => {
-            const settings = await getSettings();
+        test("get", () => {
+            const settings = getSettings();
             expect(settings).toHaveProperty("booking_duration");
         });
 
-        test("update", async () => {
-            const origSettings = await getSettings();
-            const settings = await updateSettings({ booking_duration: 10 });
+        test("update", () => {
+            const origSettings = getSettings();
+            const settings = updateSettings({ booking_duration: 10 });
             expect(settings).toStrictEqual({
                 ...origSettings,
                 booking_duration: 10,
             });
         });
 
-        test("update empty", async () => {
-            const origSettings = await getSettings();
-            const settings = await updateSettings({});
+        test("update empty", () => {
+            const origSettings = getSettings();
+            const settings = updateSettings({});
             expect(settings).toStrictEqual(origSettings);
         });
     });

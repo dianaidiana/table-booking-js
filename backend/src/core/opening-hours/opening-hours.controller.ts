@@ -8,11 +8,11 @@ import z from "zod";
 import type { Assert, Equal } from "../../types-utils.ts";
 import type { UpdateOpeningHours } from "./opening-hours.dba.ts";
 
-export async function listOpeningHoursController(
+export function listOpeningHoursController(
     req: express.Request,
     res: express.Response,
 ) {
-    const openingHours = await listOpeningHours();
+    const openingHours = listOpeningHours();
     res.status(200).json(openingHours);
 }
 
@@ -22,13 +22,13 @@ const getOpeningHoursParamsSchema = z
     })
     .strict();
 
-export async function getOpeningHoursPerDayController(
+export function getOpeningHoursPerDayController(
     req: express.Request,
     res: express.Response,
 ) {
     const { weekday } = getOpeningHoursParamsSchema.parse(req.params);
 
-    const openingHours = await getOpeningHoursByDay(weekday);
+    const openingHours = getOpeningHoursByDay(weekday);
     if (!openingHours) {
         res.status(404).json({ error: "not found" });
     }
@@ -55,13 +55,13 @@ type Check = Assert<
     Equal<z.infer<typeof updateOpeningHoursBodySchema>, UpdateOpeningHours>
 >;
 
-export async function updateOpeningHoursController(
+export function updateOpeningHoursController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = updateOpeningHoursBodySchema.parse(req.body);
     const { weekday } = updateOpeningHoursParamsSchema.parse(req.params);
-    const openingHours = await updateOpeningHours(weekday, body);
+    const openingHours = updateOpeningHours(weekday, body);
 
     res.status(200).json(openingHours);
 }

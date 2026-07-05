@@ -21,25 +21,25 @@ describe("table-groups", () => {
             closeDb();
         });
 
-        test("list all", async () => {
-            const tableGroups = await tableGroupsFactory.createMany(5);
-            const result = await listTableGroups();
+        test("list all", () => {
+            const tableGroups = tableGroupsFactory.createMany(5);
+            const result = listTableGroups();
             expect(result).toStrictEqual(tableGroups);
         });
 
-        test("get by id", async () => {
-            const tableGroup = await tableGroupsFactory.create();
-            const result = await getTableGroup(tableGroup.id);
+        test("get by id", () => {
+            const tableGroup = tableGroupsFactory.create();
+            const result = getTableGroup(tableGroup.id);
             expect(result).toStrictEqual(tableGroup);
         });
 
-        test("get by unexistent id", async () => {
-            const undefinedTableGroup = await getTableGroup(10000);
+        test("get by unexistent id", () => {
+            const undefinedTableGroup = getTableGroup(10000);
             expect(undefinedTableGroup).toBeUndefined();
         });
 
-        test("create", async () => {
-            const tableGroup = await createTableGroup({
+        test("create", () => {
+            const tableGroup = createTableGroup({
                 name: "Test Group 1",
             });
             expect(tableGroup).toStrictEqual({
@@ -48,10 +48,10 @@ describe("table-groups", () => {
             });
         });
 
-        test("update", async () => {
-            const tableGroup = await tableGroupsFactory.create();
+        test("update", () => {
+            const tableGroup = tableGroupsFactory.create();
             const newName = tableGroup.name + " adapted";
-            const result = await updateTableGroup(1, {
+            const result = updateTableGroup(1, {
                 name: newName,
             });
             expect(result).toStrictEqual({
@@ -60,33 +60,33 @@ describe("table-groups", () => {
             });
         });
 
-        test("update unexistent", async () => {
-            await expect(async () => {
-                await updateTableGroup(1, {
+        test("update unexistent", () => {
+            expect(() => {
+                updateTableGroup(1, {
                     name: "asd",
                 });
-            }).rejects.toThrow();
+            }).toThrow();
         });
 
-        test("update empty", async () => {
-            const tableGroup = await tableGroupsFactory.create();
-            const result = await updateTableGroup(tableGroup.id, {});
+        test("update empty", () => {
+            const tableGroup = tableGroupsFactory.create();
+            const result = updateTableGroup(tableGroup.id, {});
             expect(result).toStrictEqual(tableGroup);
         });
 
-        test("delete with table", async () => {
-            const tableGroup = await tableGroupsFactory.create();
-            const table = await tablesFactory.create({
+        test("delete with table", () => {
+            const tableGroup = tableGroupsFactory.create();
+            const table = tablesFactory.create({
                 table_group_id: tableGroup.id,
             });
-            await expect(deleteTableGroup(tableGroup.id)).rejects.instanceOf(
+            expect(() => deleteTableGroup(tableGroup.id)).toThrow(
                 TableGroupHasTablesDeleteError,
             );
         });
 
-        test("delete without table", async () => {
-            const tableGroup = await tableGroupsFactory.create();
-            const result = await deleteTableGroup(tableGroup.id);
+        test("delete without table", () => {
+            const tableGroup = tableGroupsFactory.create();
+            const result = deleteTableGroup(tableGroup.id);
             expect(result).toBe(true);
         });
     });

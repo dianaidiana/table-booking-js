@@ -23,26 +23,26 @@ describe("tables", () => {
             closeDb();
         });
 
-        test("list all", async () => {
-            const tables = await tablesFactory.createMany(2);
-            const result = await listTables();
+        test("list all", () => {
+            const tables = tablesFactory.createMany(2);
+            const result = listTables();
             expect(result).toStrictEqual(tables);
         });
 
-        test("get by id", async () => {
-            const table = await tablesFactory.create();
-            const result = await getTable(table.id);
+        test("get by id", () => {
+            const table = tablesFactory.create();
+            const result = getTable(table.id);
             expect(result).toStrictEqual(table);
         });
 
-        test("get by unexistent id", async () => {
-            const undefinedTable = await getTable(10000);
+        test("get by unexistent id", () => {
+            const undefinedTable = getTable(10000);
             expect(undefinedTable).toBeUndefined();
         });
 
-        test("create", async () => {
-            const tableGroup = await tableGroupsFactory.create();
-            const table = await createTable({
+        test("create", () => {
+            const tableGroup = tableGroupsFactory.create();
+            const table = createTable({
                 table_group_id: tableGroup.id,
                 name: "11",
                 capacity: 4,
@@ -58,29 +58,29 @@ describe("tables", () => {
             });
         });
 
-        test("create with unexistent table_group_id", async () => {
-            await expect(async () => {
-                await createTable({
+        test("create with unexistent table_group_id", () => {
+            expect(() => {
+                createTable({
                     table_group_id: 1000,
                     name: "11",
                     capacity: 4,
                     disabled: false,
                 });
-            }).rejects.toThrow();
+            }).toThrow();
         });
         // TODO: throw should be an instanceof a tailored Error for this case
 
-        test("update everything but disabled", async () => {
-            const table = await tablesFactory.create();
+        test("update everything but disabled", () => {
+            const table = tablesFactory.create();
             const id = table.id;
 
-            const update1 = await updateTable(id, {
+            const update1 = updateTable(id, {
                 name: "12",
             });
             expect(update1).toStrictEqual({ ...table, name: "12" });
 
-            const otherTableGroup = await tableGroupsFactory.create();
-            const update2 = await updateTable(id, {
+            const otherTableGroup = tableGroupsFactory.create();
+            const update2 = updateTable(id, {
                 table_group_id: otherTableGroup.id,
             });
             expect(update2).toStrictEqual({
@@ -88,73 +88,71 @@ describe("tables", () => {
                 table_group_id: otherTableGroup.id,
             });
 
-            const update3 = await updateTable(id, {
+            const update3 = updateTable(id, {
                 capacity: 5,
             });
             expect(update3).toStrictEqual({ ...update2, capacity: 5 });
         });
 
-        test("update disabled without bookings", async () => {
-            const table = await tablesFactory.create();
-            const update = await updateTable(table.id, {
+        test("update disabled without bookings", () => {
+            const table = tablesFactory.create();
+            const update = updateTable(table.id, {
                 disabled: true,
             });
             expect(update).toStrictEqual({ ...table, disabled: true });
         });
 
-        test("disable with future bookings", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("disable with future bookings", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO()
                     .add({ days: 2 })
                     .toString(),
             });
 
-            await expect(
-                async () =>
-                    await updateTable(table.id, {
-                        disabled: true,
-                    }),
-            ).rejects.instanceOf(TableHasBookingsUpdateError);
+            expect(() =>
+                updateTable(table.id, {
+                    disabled: true,
+                }),
+            ).toThrow(TableHasBookingsUpdateError);
         });
 
-        test("disable with future bookings today", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("disable with future bookings today", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO().toString(),
                 booking_start_time:
                     getMinutesFrom00hs(Temporal.Now.plainTimeISO()) + 1,
             });
 
-            await expect(
-                async () =>
-                    await updateTable(table.id, {
-                        disabled: true,
-                    }),
-            ).rejects.instanceOf(TableHasBookingsUpdateError);
+            expect(() =>
+                updateTable(table.id, {
+                    disabled: true,
+                }),
+            ).toThrow(TableHasBookingsUpdateError);
         });
 
-        test("disable with past bookings", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("disable with past bookings", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO()
                     .subtract({ days: 2 })
                     .toString(),
             });
 
-            await expect(
-                await updateTable(table.id, {
+            expect(
+                updateTable(table.id, {
                     disabled: true,
                 }),
             ).toStrictEqual({ ...table, disabled: true });
         });
 
-        test("disable with past bookings today", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("disable with past bookings today", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO().toString(),
                 duration_minutes: 2,
@@ -163,40 +161,40 @@ describe("tables", () => {
             });
 
             expect(
-                await updateTable(table.id, {
+                updateTable(table.id, {
                     disabled: true,
                 }),
             ).toStrictEqual({ ...table, disabled: true });
         });
 
-        test("update empty", async () => {
-            const table = await tablesFactory.create();
-            const update = await updateTable(table.id, {});
+        test("update empty", () => {
+            const table = tablesFactory.create();
+            const update = updateTable(table.id, {});
             expect(update).toStrictEqual(table);
         });
 
-        test("delete without bookings", async () => {
-            const table = await tablesFactory.create();
-            const result = await deleteTable(table.id);
+        test("delete without bookings", () => {
+            const table = tablesFactory.create();
+            const result = deleteTable(table.id);
             expect(result).toBe(true);
         });
 
-        test("delete with past bookings", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("delete with past bookings", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO()
                     .subtract({ days: 2 })
                     .toString(),
             });
 
-            const result = await deleteTable(table.id);
+            const result = deleteTable(table.id);
             expect(result).toBe(true);
         });
 
-        test("delete with past bookings today", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("delete with past bookings today", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO().toString(),
                 duration_minutes: 2,
@@ -204,36 +202,36 @@ describe("tables", () => {
                     getMinutesFrom00hs(Temporal.Now.plainTimeISO()) - 5,
             });
 
-            const result = await deleteTable(table.id);
+            const result = deleteTable(table.id);
             expect(result).toBe(true);
         });
 
-        test("delete with future bookings", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("delete with future bookings", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO()
                     .add({ days: 2 })
                     .toString(),
             });
 
-            await expect(
-                async () => await deleteTable(table.id),
-            ).rejects.instanceOf(TableHasBookingsUpdateError);
+            expect(() => deleteTable(table.id)).toThrow(
+                TableHasBookingsUpdateError,
+            );
         });
 
-        test("delete with future bookings today", async () => {
-            const table = await tablesFactory.create();
-            const booking = await bookingsFactory.create({
+        test("delete with future bookings today", () => {
+            const table = tablesFactory.create();
+            const booking = bookingsFactory.create({
                 table_id: table.id,
                 booking_date: Temporal.Now.plainDateISO().toString(),
                 booking_start_time:
                     getMinutesFrom00hs(Temporal.Now.plainTimeISO()) + 1,
             });
 
-            await expect(
-                async () => await deleteTable(table.id),
-            ).rejects.instanceOf(TableHasBookingsUpdateError);
+            expect(() => deleteTable(table.id)).toThrow(
+                TableHasBookingsUpdateError,
+            );
         });
     });
 });

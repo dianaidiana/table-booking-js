@@ -13,11 +13,11 @@ import {
 } from "./table-groups.service.ts";
 import type { Assert, Equal } from "../../types-utils.ts";
 
-export async function listTableGroupsController(
+export function listTableGroupsController(
     req: express.Request,
     res: express.Response,
 ) {
-    const tableGroups = await listTableGroups();
+    const tableGroups = listTableGroups();
     res.status(200).json(tableGroups);
 }
 
@@ -27,13 +27,13 @@ const getTableGroupParamsSchema = z
     })
     .strict();
 
-export async function getTableGroupController(
+export function getTableGroupController(
     req: express.Request,
     res: express.Response,
 ) {
     const { id } = getTableGroupParamsSchema.parse(req.params);
 
-    const tableGroup = await getTableGroup(id);
+    const tableGroup = getTableGroup(id);
     if (!tableGroup) {
         res.status(404).json({ error: "not found" });
     }
@@ -51,13 +51,13 @@ type Check = Assert<
     Equal<z.infer<typeof createTableGroupBodySchema>, CreateTableGroup>
 >;
 
-export async function createTableGroupController(
+export function createTableGroupController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = createTableGroupBodySchema.parse(req.body);
 
-    const tableGroup = await createTableGroup(body);
+    const tableGroup = createTableGroup(body);
 
     res.status(200).json(tableGroup);
 }
@@ -69,13 +69,13 @@ const updateTableGroupParamsSchema = z
     })
     .strict();
 
-export async function updateTableGroupController(
+export function updateTableGroupController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = updateTableGroupBodySchema.parse(req.body);
     const { id } = updateTableGroupParamsSchema.parse(req.params);
-    const tableGroup = await updateTableGroup(id, body);
+    const tableGroup = updateTableGroup(id, body);
 
     res.status(200).json(tableGroup);
 }
@@ -86,13 +86,13 @@ const deleteTableGroupParamsSchema = z
     })
     .strict();
 
-export async function deleteTableGroupController(
+export function deleteTableGroupController(
     req: express.Request,
     res: express.Response,
 ) {
     const { id } = deleteTableGroupParamsSchema.parse(req.params);
     try {
-        const isDeleted = await deleteTableGroup(id);
+        const isDeleted = deleteTableGroup(id);
         if (isDeleted) {
             res.status(204).end();
         } else {

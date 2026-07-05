@@ -8,7 +8,6 @@ import {
     listBookings,
     updateBooking,
 } from "./bookings.service.ts";
-import { spec } from "node:test/reporters";
 
 const filterBookingsBodySchema = z
     .object({
@@ -30,12 +29,12 @@ type CheckFilters = Assert<
     Equal<z.infer<typeof filterBookingsBodySchema>, BookingsFilters>
 >;
 
-export async function listBookingsController(
+export function listBookingsController(
     req: express.Request,
     res: express.Response,
 ) {
     const filters = filterBookingsBodySchema.parse(req.query);
-    const bookings = await listBookings(filters);
+    const bookings = listBookings(filters);
     res.status(200).json(bookings);
 }
 
@@ -45,13 +44,13 @@ const getBookingParamsSchema = z
     })
     .strict();
 
-export async function getBookingController(
+export function getBookingController(
     req: express.Request,
     res: express.Response,
 ) {
     const { id } = getBookingParamsSchema.parse(req.params);
 
-    const booking = await getBooking(id);
+    const booking = getBooking(id);
     if (!booking) {
         res.status(404).json({ error: "not found" });
     }
@@ -79,13 +78,13 @@ type CheckCreateBooking = Assert<
     Equal<z.infer<typeof createBookingBodySchema>, CreateBooking>
 >;
 
-export async function createBookingController(
+export function createBookingController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = createBookingBodySchema.parse(req.body);
 
-    const booking = await createBooking(body);
+    const booking = createBooking(body);
 
     res.json(200).json(booking);
 }
@@ -97,13 +96,13 @@ const updateBookingParamsSchema = z
     })
     .strict();
 
-export async function updateBookingController(
+export function updateBookingController(
     req: express.Request,
     res: express.Response,
 ) {
     const body = updateBookingBodySchema.parse(req.body);
     const { id } = updateBookingParamsSchema.parse(req.params);
-    const booking = await updateBooking(id, body);
+    const booking = updateBooking(id, body);
 
     res.status(200).json(booking);
 }

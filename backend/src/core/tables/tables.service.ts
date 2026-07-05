@@ -1,5 +1,5 @@
 import { getMinutesFrom00hs } from "../../utils.ts";
-import { dbExistsBookings, dbListBookings } from "../bookings/bookings.dba.ts";
+import { dbExistsBookings } from "../bookings/bookings.dba.ts";
 import {
     dbCreateTable,
     dbDeleteTable,
@@ -11,16 +11,16 @@ import {
     type UpdateTable,
 } from "./tables.dba.ts";
 
-export async function listTables(): Promise<Table[]> {
-    return await dbListTables();
+export function listTables(): Table[] {
+    return dbListTables();
 }
 
-export async function getTable(id: number): Promise<Table | undefined> {
-    return await dbGetTable(id);
+export function getTable(id: number): Table | undefined {
+    return dbGetTable(id);
 }
 
-export async function createTable(createTable: CreateTable): Promise<Table> {
-    return await dbCreateTable(createTable);
+export function createTable(createTable: CreateTable): Table {
+    return dbCreateTable(createTable);
 }
 
 export class TableHasBookingsUpdateError extends Error {
@@ -31,13 +31,10 @@ export class TableHasBookingsUpdateError extends Error {
     }
 }
 
-export async function updateTable(
-    id: number,
-    updateTable: UpdateTable,
-): Promise<Table> {
+export function updateTable(id: number, updateTable: UpdateTable): Table {
     if (updateTable.disabled) {
         if (
-            await dbExistsBookings({
+            dbExistsBookings({
                 tableId: id,
                 startDate: Temporal.Now.plainDateISO().toString(),
                 startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
@@ -46,12 +43,12 @@ export async function updateTable(
             throw new TableHasBookingsUpdateError(id);
         }
     }
-    return await dbUpdateTable(id, updateTable);
+    return dbUpdateTable(id, updateTable);
 }
 
-export async function deleteTable(id: number): Promise<Boolean> {
+export function deleteTable(id: number): Boolean {
     if (
-        await dbExistsBookings({
+        dbExistsBookings({
             tableId: id,
             startDate: Temporal.Now.plainDateISO().toString(),
             startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
@@ -60,5 +57,5 @@ export async function deleteTable(id: number): Promise<Boolean> {
         throw new TableHasBookingsUpdateError(id);
     }
 
-    return await dbDeleteTable(id);
+    return dbDeleteTable(id);
 }

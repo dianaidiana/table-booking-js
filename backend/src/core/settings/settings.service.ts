@@ -5,12 +5,12 @@ import {
     type Settings,
 } from "./settings.dba.ts";
 
-export async function getSettings(): Promise<Settings> {
-    return await dbGetSettings();
+export function getSettings(): Settings {
+    return dbGetSettings();
 }
 
-export async function updateSettings({
+export function updateSettings({
     booking_duration,
-}: PartialSettings): Promise<Settings> {
-    return await dbUpdateSettings({ booking_duration });
+}: PartialSettings): Settings {
+    return dbUpdateSettings({ booking_duration });
 }
