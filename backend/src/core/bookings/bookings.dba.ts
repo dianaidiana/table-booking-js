@@ -3,7 +3,6 @@ import { dbGetSettings } from "../settings/settings.dba.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
 import type { PartialWithUndefined } from "../../types-utils.ts";
 import type { UUIDTypes } from "uuid";
-import { getMinutesFrom00hs } from "../../utils.ts";
 
 export interface Booking {
     id: number;
@@ -49,9 +48,7 @@ export interface CreateBooking extends Omit<
 
 export type UpdateBooking = PartialWithUndefined<CreateBooking>;
 
-export async function dbListBookings(
-    filters: BookingsFilters,
-): Promise<Booking[]> {
+export function dbListBookings(filters: BookingsFilters): Booking[] {
     const db = getDb();
     const { setExpr, values } = makeSqlFilterArguments(filters);
 
@@ -64,9 +61,7 @@ export async function dbListBookings(
         .all(...values);
 }
 
-export async function dbExistsBookings(
-    filters: BookingsFilters,
-): Promise<boolean> {
+export function dbExistsBookings(filters: BookingsFilters): boolean {
     const db = getDb();
     const { setExpr, values } = makeSqlFilterArguments(filters);
 
@@ -165,7 +160,7 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
     return { setExpr: setExprs.join(" AND "), values };
 }
 
-export async function dbGetBooking(id: number): Promise<Booking | undefined> {
+export function dbGetBooking(id: number): Booking | undefined {
     const db = getDb();
     const booking = db
         .prepare<[number], Booking>("SELECT * FROM bookings WHERE id = ?")
@@ -174,14 +169,14 @@ export async function dbGetBooking(id: number): Promise<Booking | undefined> {
     return booking;
 }
 
-export async function dbCreateBooking(
+export function dbCreateBooking(
     createBooking: CreateBooking,
     bookingSecret: UUIDTypes,
-): Promise<Booking> {
+): Booking {
     const db = getDb();
 
     if (!createBooking.duration_minutes) {
-        const settings = await dbGetSettings();
+        const settings = dbGetSettings();
         createBooking.duration_minutes = settings.booking_duration;
     }
 
@@ -212,7 +207,7 @@ export async function dbCreateBooking(
     return booking;
 }
 
-export async function dbUpdateBooking(
+export function dbUpdateBooking(
     id: number,
     {
         table_id,
@@ -227,10 +222,10 @@ export async function dbUpdateBooking(
         status,
         duration_minutes,
     }: UpdateBooking,
-): Promise<Booking> {
+): Booking {
     const db = getDb();
 
-    return await dbPatchHelper<UpdateBooking, Booking>(
+    return dbPatchHelper<UpdateBooking, Booking>(
         db,
         id,
         {

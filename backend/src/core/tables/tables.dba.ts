@@ -35,7 +35,7 @@ function castCreateTableToCreateTableDb(
     };
 }
 
-export async function dbListTables(): Promise<Table[]> {
+export function dbListTables(): Table[] {
     const db = getDb();
     const tables = db
         .prepare<[], TableDb>("SELECT * FROM tables WHERE deleted_at IS NULL")
@@ -44,8 +44,9 @@ export async function dbListTables(): Promise<Table[]> {
     return tables.map((table) => castTableDbToTable(table));
 }
 
-export async function dbGetTable(id: number): Promise<Table | undefined> {
+export function dbGetTable(id: number): Table | undefined {
     const db = getDb();
+
     const table = db
         .prepare<
             [number],
@@ -58,7 +59,7 @@ export async function dbGetTable(id: number): Promise<Table | undefined> {
     }
 }
 
-export async function dbCreateTable(createTable: CreateTable): Promise<Table> {
+export function dbCreateTable(createTable: CreateTable): Table {
     const db = getDb();
 
     const stmt = db.prepare<CreateTableDb, TableDb>(
@@ -76,13 +77,13 @@ export async function dbCreateTable(createTable: CreateTable): Promise<Table> {
     return castTableDbToTable(table);
 }
 
-export async function dbUpdateTable(
+export function dbUpdateTable(
     id: number,
     { table_group_id, name, capacity, disabled }: UpdateTable,
-): Promise<Table> {
+): Table {
     const db = getDb();
 
-    const out = await dbPatchHelper<UpdateTable, TableDb>(
+    const out = dbPatchHelper<UpdateTable, TableDb>(
         db,
         id,
         {
@@ -100,7 +101,7 @@ export async function dbUpdateTable(
     return castTableDbToTable(out);
 }
 
-export async function dbDeleteTable(id: number): Promise<Boolean> {
+export function dbDeleteTable(id: number): Boolean {
     const db = getDb();
     const stmt = db.prepare<[number], Table>(
         "UPDATE tables SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?",

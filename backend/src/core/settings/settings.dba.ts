@@ -8,7 +8,7 @@ export interface Settings {
 
 export type PartialSettings = PartialWithUndefined<Settings>;
 
-export async function dbGetSettings(): Promise<Settings> {
+export function dbGetSettings(): Settings {
     const db = getDb();
     const settings = db
         .prepare<[], Settings>("SELECT booking_duration FROM settings")
@@ -20,12 +20,12 @@ export async function dbGetSettings(): Promise<Settings> {
     return settings;
 }
 
-export async function dbUpdateSettings({
+export function dbUpdateSettings({
     booking_duration,
-}: PartialSettings): Promise<Settings> {
+}: PartialSettings): Settings {
     const db = getDb();
 
-    return await dbPatchHelper<PartialSettings, Settings>(
+    return dbPatchHelper<PartialSettings, Settings>(
         db,
         1,
         { booking_duration },

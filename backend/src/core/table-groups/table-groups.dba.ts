@@ -11,7 +11,7 @@ export interface TableGroup {
 export type CreateTableGroup = Omit<TableGroup, "id">;
 export type UpdateTableGroup = PartialWithUndefined<CreateTableGroup>;
 
-export async function dbListTableGroups(): Promise<TableGroup[]> {
+export function dbListTableGroups(): TableGroup[] {
     const db = getDb();
     const tableGroups = db
         .prepare<[], TableGroup>("SELECT * FROM table_groups")
@@ -20,9 +20,7 @@ export async function dbListTableGroups(): Promise<TableGroup[]> {
     return tableGroups;
 }
 
-export async function dbGetTableGroup(
-    id: number,
-): Promise<TableGroup | undefined> {
+export function dbGetTableGroup(id: number): TableGroup | undefined {
     const db = getDb();
     const tableGroup = db
         .prepare<
@@ -34,9 +32,7 @@ export async function dbGetTableGroup(
     return tableGroup;
 }
 
-export async function dbCreateTableGroup({
-    name,
-}: CreateTableGroup): Promise<TableGroup> {
+export function dbCreateTableGroup({ name }: CreateTableGroup): TableGroup {
     const db = getDb();
 
     const tableGroup = db
@@ -53,13 +49,13 @@ export async function dbCreateTableGroup({
     return tableGroup;
 }
 
-export async function dbUpdateTableGroup(
+export function dbUpdateTableGroup(
     id: number,
     { name }: UpdateTableGroup,
-): Promise<TableGroup> {
+): TableGroup {
     const db = getDb();
 
-    return await dbPatchHelper<UpdateTableGroup, TableGroup>(
+    return dbPatchHelper<UpdateTableGroup, TableGroup>(
         db,
         id,
         { name },
@@ -78,7 +74,7 @@ export class TableGroupHasTablesDeleteError extends Error {
     }
 }
 
-export async function dbDeleteTableGroup(id: number): Promise<boolean> {
+export function dbDeleteTableGroup(id: number): boolean {
     const db = getDb();
     const stmt = db.prepare<[number], void>(
         "DELETE FROM table_groups WHERE id = ?",

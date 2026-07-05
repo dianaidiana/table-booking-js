@@ -10,12 +10,12 @@ export interface TableInfo<OutT> {
     outColumns?: (keyof OutT)[];
 }
 
-export async function dbPatchHelper<UpdateT extends object, OutT>(
+export function dbPatchHelper<UpdateT extends object, OutT>(
     db: Database.Database,
     id: unknown,
     obj: OptionalToUndefined<UpdateT>,
     tableInfo: TableInfo<OutT>,
-): Promise<OutT> {
+): OutT {
     const { setExpr, values } = makeSqlArguments<UpdateT>(
         obj,
         tableInfo.primaryKey,

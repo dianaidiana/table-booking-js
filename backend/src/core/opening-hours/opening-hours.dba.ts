@@ -21,7 +21,7 @@ function castToOpeningHours(openingHours: OpeningHoursDb): OpeningHours {
     };
 }
 
-export async function dbListOpeningHours(): Promise<OpeningHours[]> {
+export function dbListOpeningHours(): OpeningHours[] {
     const db = getDb();
     const openingHours = db
         .prepare<[], OpeningHoursDb>("SELECT * FROM opening_hours")
@@ -30,9 +30,9 @@ export async function dbListOpeningHours(): Promise<OpeningHours[]> {
     return openingHours.map((oh) => castToOpeningHours(oh));
 }
 
-export async function dbGetOpeningHoursByDay(
+export function dbGetOpeningHoursByDay(
     weekday: number,
-): Promise<OpeningHours | undefined> {
+): OpeningHours | undefined {
     const db = getDb();
     const openingHours = db
         .prepare<
@@ -46,13 +46,13 @@ export async function dbGetOpeningHoursByDay(
     }
 }
 
-export async function dbUpdateOpeningHours(
+export function dbUpdateOpeningHours(
     weekday: number,
     { opening_time, closing_time, is_closed }: UpdateOpeningHours,
-): Promise<OpeningHours> {
+): OpeningHours {
     const db = getDb();
 
-    const out = await dbPatchHelper<UpdateOpeningHours, OpeningHoursDb>(
+    const out = dbPatchHelper<UpdateOpeningHours, OpeningHoursDb>(
         db,
         weekday,
         {
