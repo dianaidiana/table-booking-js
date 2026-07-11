@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import {
     dbCreateBooking,
-    dbGetBooking,
+    dbGetBookingById,
     dbListBookings,
     dbUpdateBooking,
     type Booking,
@@ -19,7 +19,7 @@ export function listBookings(filters: BookingsFilters): Booking[] {
 }
 
 export function getBooking(id: number): Booking | undefined {
-    return dbGetBooking(id);
+    return dbGetBookingById(id);
 }
 
 export function createBooking(createBooking: CreateBooking): Booking {
@@ -50,7 +50,7 @@ export function updateBooking(
         updateBooking.booking_start_time ||
         updateBooking.duration_minutes
     ) {
-        const currentBooking = dbGetBooking(id);
+        const currentBooking = dbGetBookingById(id);
         if (!currentBooking) {
             throw new Error("Failed to update booking");
         }

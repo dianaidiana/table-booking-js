@@ -21,6 +21,18 @@ export interface Booking {
     duration_minutes: number;
 }
 
+export interface CreateBooking extends Omit<
+    Booking,
+    | "id"
+    | "special_requests"
+    | "created_at"
+    | "booking_secret"
+    | "duration_minutes"
+> {
+    duration_minutes?: number | undefined;
+    special_requests?: string | undefined;
+}
+
 export interface BookingsFilters {
     specificDate?: string | undefined;
     startDate?: string | undefined;
@@ -32,18 +44,6 @@ export interface BookingsFilters {
     tableId?: number | undefined;
     guestEmail?: string | undefined;
     exclude?: number | undefined;
-}
-
-export interface CreateBooking extends Omit<
-    Booking,
-    | "id"
-    | "special_requests"
-    | "created_at"
-    | "booking_secret"
-    | "duration_minutes"
-> {
-    duration_minutes?: number | undefined;
-    special_requests?: string | undefined;
 }
 
 export type UpdateBooking = PartialWithUndefined<CreateBooking>;
@@ -160,11 +160,25 @@ function makeSqlFilterArguments(filters: BookingsFilters) {
     return { setExpr: setExprs.join(" AND "), values };
 }
 
-export function dbGetBooking(id: number): Booking | undefined {
+export function dbGetBookingById(id: number): Booking | undefined {
     const db = getDb();
     const booking = db
         .prepare<[number], Booking>("SELECT * FROM bookings WHERE id = ?")
         .get(id);
+
+    return booking;
+}
+
+export function dbGetBookingByBookingSecret(
+    bookingSecret: UUIDTypes,
+): Booking | undefined {
+    const db = getDb();
+    const booking = db
+        .prepare<
+            [string],
+            Booking
+        >("SELECT * FROM bookings WHERE booking_secret = ?")
+        .get(bookingSecret.toString());
 
     return booking;
 }
