@@ -1,8 +1,9 @@
+import { group } from "node:console";
 import { getDb } from "../../db-setup.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 
-interface TableBookingRow {
+export interface TableBookingRow {
     table_id: number;
     table_group_id: number;
     table_group_name: string;
@@ -10,28 +11,14 @@ interface TableBookingRow {
     end_time: number | null;
 }
 
-export interface BookedSlot {
-    start: number;
-    end: number;
-}
-
-export type TableMap = Record<number, BookedSlot[]>;
-export type GroupMap = Record<string, TableMap>;
-
-export interface AvailableSlots {
-    tableGroup: string;
-    availableStartTimes: number[];
-}
-
 export function dbGetTableBookingRows(
     date: Temporal.PlainDate,
     pax: number,
-    //tableGroup?: string/number --- TODO: should I add this to avoid bringin all bookings when asked for assignTableId?
+    tableGroupId?: number,
 ): TableBookingRow[] {
     const db = getDb();
-    const tableBookingRows = db
-        .prepare<[string, number], TableBookingRow>(
-            `SELECT
+
+    let query = `SELECT
                 tables.id as table_id,
                 table_groups.id as table_group_id,
                 table_groups.name as table_group_name,
@@ -46,9 +33,15 @@ export function dbGetTableBookingRows(
                 AND bookings.status != 'CANCELED'
             WHERE tables.capacity >= ?
                 AND tables.disabled = 0
-                AND tables.deleted_at IS NULL;`,
-        )
-        .all(date.toString(), pax);
+                AND tables.deleted_at IS NULL`;
+
+    if (tableGroupId) {
+        query += ` AND table_groups.id = ?`;
+    }
+
+    const tableBookingRows = db
+        .prepare<[string, number, number?], TableBookingRow>(query)
+        .all(date.toString(), pax, tableGroupId);
 
     return tableBookingRows;
 }
