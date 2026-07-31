@@ -53,6 +53,7 @@ export function getBookingController(
     const booking = getBooking(id);
     if (!booking) {
         res.status(404).json({ error: "not found" });
+        return;
     }
 
     res.status(200).json(booking);
@@ -86,7 +87,7 @@ export function createBookingController(
 
     const booking = createBooking(body);
 
-    res.json(200).json(booking);
+    res.status(200).json(booking);
 }
 
 const updateBookingBodySchema = createBookingBodySchema.partial();
