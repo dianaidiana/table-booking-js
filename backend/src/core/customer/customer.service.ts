@@ -1,30 +1,29 @@
-import { uuid } from "zod";
 import { getTimeFromMinutes } from "../../utils.ts";
 import {
     dbGetBookingByBookingSecret,
+    dbUpdateBooking,
     type Booking,
     type CreateBooking,
 } from "../bookings/bookings.dba.ts";
 import { createBooking } from "../bookings/bookings.service.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
-import type { TableGroup } from "../table-groups/table-groups.dba.ts";
-import { dbGetTableBookingRows, type TableBookingRow } from "./customer.dba.ts";
-import { validate as uuidValidate } from "uuid";
+import {
+    dbGetTableBookingRows,
+    type TableBookingRow,
+    type TableBookingRowsFilters,
+} from "./customer.dba.ts";
 
-// completeRegistration(
+export interface SlotRequest {
+    date: string;
+    pax: number;
+}
 
-// 	await createBooking(..);
-
-// 	await sendEmail();
-
-// )
-
-// confirmRegistration(booking_secret)
-
-// cancelRegistration(booking_secret);
-
-// await fetch("sendemail.com/send", { method: "POST", body: "email" });
+export interface AvailableSlots {
+    tableGroupId: number;
+    tableGroupName: string;
+    availableStartTimes: number[];
+}
 
 interface BookedSlot {
     start: number;
@@ -34,28 +33,16 @@ interface BookedSlot {
 type TableMap = Map<number, BookedSlot[]>;
 type GroupMap = Map<number, { groupName: string; tableMap: TableMap }>;
 
-export interface AvailableSlots {
-    tableGroupId: number;
-    tableGroupName: string;
-    availableStartTimes: number[];
-}
-
-export interface BookingRequest extends Omit<
-    CreateBooking,
-    "table_id" | "duration_minutes" | "status"
-> {}
-
-export function getAvailableSlots(
-    date: Temporal.PlainDate,
-    pax: number,
-): AvailableSlots[] {
-    const openingHours = dbGetOpeningHoursByDay(date.dayOfWeek % 7);
+export function getAvailableSlots(slotRequest: SlotRequest): AvailableSlots[] {
+    const openingHours = dbGetOpeningHoursByDay(
+        Temporal.PlainDate.from(slotRequest.date).dayOfWeek % 7,
+    );
     const { booking_duration } = dbGetSettings();
     if (!openingHours || openingHours.is_closed) {
         return [];
     }
 
-    const tableBookingRows = dbGetTableBookingRows(date, pax);
+    const tableBookingRows = dbGetTableBookingRows(slotRequest);
     const groupMap = createGroupMap(tableBookingRows);
 
     const result = [];
@@ -125,54 +112,33 @@ function createGroupMap(tableBookingRows: TableBookingRow[]): GroupMap {
     return groupMap;
 }
 
-// careful: this method assumes that all bookings belong to the same tableGroup
-function createTableMap(tableBookingRows: TableBookingRow[]): TableMap {
-    const tableMap: TableMap = new Map();
-
-    for (const row of tableBookingRows) {
-        const tableId = row.table_id;
-
-        if (!tableMap.has(tableId)) {
-            tableMap.set(tableId, []);
-        }
-
-        if (row.start_time !== null && row.end_time !== null) {
-            tableMap.get(tableId)!.push({
-                start: row.start_time,
-                end: row.end_time,
-            });
-        }
-    }
-
-    return tableMap;
-}
-
 // if (slotStart,slotEnd) intersects any blokedSlot in the array, then it's not free
 function isTableFree(
     bookedSlots: BookedSlot[],
     slotStart: number,
     slotEnd: number,
 ): boolean {
-    for (const bookedSlot of bookedSlots) {
-        if (slotStart < bookedSlot.end && slotEnd > bookedSlot.start) {
-            return false;
-        }
-    }
-
-    return true;
+    return !bookedSlots.some(
+        (bookedSlot) =>
+            slotStart < bookedSlot.end && slotEnd > bookedSlot.start,
+    );
 }
 
-export function assignTableId(
-    date: Temporal.PlainDate,
-    pax: number,
-    slotStart: number,
+function assignTableId(
+    slotRequest: SlotRequest,
     tableGroupId: number,
+    slotStart: number,
 ): number | null {
     const { booking_duration } = dbGetSettings();
     const slotEnd = slotStart + booking_duration;
 
-    const tableBookingRows = dbGetTableBookingRows(date, pax, tableGroupId);
-    const tableMap = createTableMap(tableBookingRows);
+    const tableBookingRows = dbGetTableBookingRows({
+        ...slotRequest,
+        tableGroupId,
+    });
+    const groupMap = createGroupMap(tableBookingRows);
+
+    const tableMap = groupMap.get(tableGroupId)?.tableMap ?? new Map();
 
     for (const [tableId, bookedSlots] of tableMap) {
         if (isTableFree(bookedSlots, slotStart, slotEnd)) {
@@ -183,15 +149,22 @@ export function assignTableId(
     return null;
 }
 
+export interface BookingRequest extends Omit<
+    CreateBooking,
+    "table_id" | "duration_minutes" | "status"
+> {}
+
 export function completeRegistration(
     bookingRequest: BookingRequest,
     tableGroupId: number,
 ): Booking {
     const tableId = assignTableId(
-        Temporal.PlainDate.from(bookingRequest.booking_date),
-        bookingRequest.pax,
-        bookingRequest.booking_start_time,
+        {
+            date: bookingRequest.booking_date,
+            pax: bookingRequest.pax,
+        },
         tableGroupId,
+        bookingRequest.booking_start_time,
     );
 
     if (!tableId) {
@@ -218,6 +191,34 @@ export function completeRegistration(
     return booking;
 }
 
-export function confirmRegistration(bookingSecret: string) {
+export function confirmRegistration(bookingSecret: string): Booking {
     const booking = dbGetBookingByBookingSecret(bookingSecret);
+    if (!booking) {
+        throw new Error("Failed to confirm booking: booking not found");
+    }
+
+    const status = booking.status;
+    if (status == "CANCELLED") {
+        throw new Error("Unable to confirm booking: booking is cancelled");
+    }
+
+    if (status != "CONFIRMED") {
+        return dbUpdateBooking(booking.id, { status: "CONFIRMED" });
+    }
+
+    return booking;
+}
+
+export function cancelRegistration(bookingSecret: string): Booking {
+    const booking = dbGetBookingByBookingSecret(bookingSecret);
+    if (!booking) {
+        throw new Error("Failed to cancel booking: booking not found");
+    }
+
+    const status = booking.status;
+    if (status != "CANCELLED") {
+        return dbUpdateBooking(booking.id, { status: "CANCELLED" });
+    }
+
+    return booking;
 }

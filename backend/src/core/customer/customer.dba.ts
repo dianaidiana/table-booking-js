@@ -1,7 +1,4 @@
-import { group } from "node:console";
 import { getDb } from "../../db-setup.ts";
-import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
-import { dbGetSettings } from "../settings/settings.dba.ts";
 
 export interface TableBookingRow {
     table_id: number;
@@ -11,10 +8,14 @@ export interface TableBookingRow {
     end_time: number | null;
 }
 
+export interface TableBookingRowsFilters {
+    date: string;
+    pax: number;
+    tableGroupId?: number;
+}
+
 export function dbGetTableBookingRows(
-    date: Temporal.PlainDate,
-    pax: number,
-    tableGroupId?: number,
+    tableBookingRowsFilters: TableBookingRowsFilters,
 ): TableBookingRow[] {
     const db = getDb();
 
@@ -30,18 +31,21 @@ export function dbGetTableBookingRows(
             LEFT JOIN bookings
                 ON tables.id = bookings.table_id
                 AND bookings.booking_date = ?
-                AND bookings.status != 'CANCELED'
+                AND bookings.status != 'CANCELLED'
             WHERE tables.capacity >= ?
                 AND tables.disabled = 0
                 AND tables.deleted_at IS NULL`;
 
-    if (tableGroupId) {
+    const values = [tableBookingRowsFilters.date, tableBookingRowsFilters.pax];
+
+    if (tableBookingRowsFilters.tableGroupId) {
         query += ` AND table_groups.id = ?`;
+        values.push(tableBookingRowsFilters.tableGroupId);
     }
 
     const tableBookingRows = db
-        .prepare<[string, number, number?], TableBookingRow>(query)
-        .all(date.toString(), pax, tableGroupId);
+        .prepare<unknown[], TableBookingRow>(query)
+        .all(...values);
 
     return tableBookingRows;
 }
