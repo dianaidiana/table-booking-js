@@ -152,18 +152,17 @@ function assignTableId(
 export interface BookingRequest extends Omit<
     CreateBooking,
     "table_id" | "duration_minutes" | "status"
-> {}
+> {
+    tableGroupId: number;
+}
 
-export function completeRegistration(
-    bookingRequest: BookingRequest,
-    tableGroupId: number,
-): Booking {
+export function completeBooking(bookingRequest: BookingRequest): Booking {
     const tableId = assignTableId(
         {
             date: bookingRequest.booking_date,
             pax: bookingRequest.pax,
         },
-        tableGroupId,
+        bookingRequest.tableGroupId,
         bookingRequest.booking_start_time,
     );
 
@@ -176,22 +175,27 @@ export function completeRegistration(
         table_id: tableId,
         status: "PENDING",
     });
-    console.log(
-        `Fake email:
-        Hi ${booking.guest_first_name},
-        Thank you for booking with us!
-        Please review your reservation details and click on the buttons below to confirm or cancel your reservation:
-        Date: ${booking.booking_date}
-        Time: ${getTimeFromMinutes(booking.booking_start_time).toString()}
-        Attendees: ${booking.pax}
-        [CONFIRM] [CANCEL]
-        `,
-    );
+
+    // console.log(
+    //     `Fake email:
+    //     Hi ${booking.guest_first_name},
+    //     Thank you for booking with us!
+    //     Please review your reservation details and click on the button link to confirm or cancel your reservation:
+    //     Date: ${booking.booking_date}
+    //     Time: ${getTimeFromMinutes(booking.booking_start_time).toString()}
+    //     Attendees: ${booking.pax}
+    //     ${booking.booking_secret}
+    //     `,
+    // );
 
     return booking;
 }
 
-export function confirmRegistration(bookingSecret: string): Booking {
+export function getBookingDetails(bookingSecret: string): Booking | undefined {
+    return dbGetBookingByBookingSecret(bookingSecret);
+}
+
+export function confirmBooking(bookingSecret: string): Booking {
     const booking = dbGetBookingByBookingSecret(bookingSecret);
     if (!booking) {
         throw new Error("Failed to confirm booking: booking not found");
@@ -209,7 +213,7 @@ export function confirmRegistration(bookingSecret: string): Booking {
     return booking;
 }
 
-export function cancelRegistration(bookingSecret: string): Booking {
+export function cancelBooking(bookingSecret: string): Booking {
     const booking = dbGetBookingByBookingSecret(bookingSecret);
     if (!booking) {
         throw new Error("Failed to cancel booking: booking not found");
