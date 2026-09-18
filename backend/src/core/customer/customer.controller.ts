@@ -6,6 +6,9 @@ import {
     getAvailableSlots,
     type BookingRequest,
     completeBooking,
+    getBookingDetails,
+    confirmBooking,
+    cancelBooking,
 } from "./customer.service.ts";
 
 const getAvailableSlotsBodySchema = z
@@ -52,5 +55,56 @@ export function completeBookingController(
 ) {
     const body = completeBookingBodyShema.parse(req.body);
     const booking = completeBooking(body);
+    res.status(200).json(booking);
+}
+
+const getBookingDetailsParamsSchema = z
+    .object({
+        bookingSecret: z.uuid(),
+    })
+    .strict();
+
+export function getBookingDetailsController(
+    req: express.Request,
+    res: express.Response,
+) {
+    const { bookingSecret } = getBookingDetailsParamsSchema.parse(req.params);
+    const booking = getBookingDetails(bookingSecret);
+
+    if (!booking) {
+        res.status(404).json({ error: "not found" });
+        return;
+    }
+
+    res.status(200).json(booking);
+}
+
+const confirmBookingParamsSchema = z
+    .object({
+        bookingSecret: z.uuid(),
+    })
+    .strict();
+
+export function confirmBookingController(
+    req: express.Request,
+    res: express.Response,
+) {
+    const { bookingSecret } = confirmBookingParamsSchema.parse(req.params);
+    const booking = confirmBooking(bookingSecret);
+    res.status(200).json(booking);
+}
+
+const cancelBookingParamsSchema = z
+    .object({
+        bookingSecret: z.uuid(),
+    })
+    .strict();
+
+export function cancelBookingController(
+    req: express.Request,
+    res: express.Response,
+) {
+    const { bookingSecret } = cancelBookingParamsSchema.parse(req.params);
+    const booking = cancelBooking(bookingSecret);
     res.status(200).json(booking);
 }
