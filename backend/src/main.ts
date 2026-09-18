@@ -4,7 +4,7 @@ import { adminRoutes } from "./routes/admin/admin-routes.ts";
 import z from "zod";
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT;
 
 initDb();
 
