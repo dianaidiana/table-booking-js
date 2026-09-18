@@ -1,6 +1,7 @@
 import express from "express";
 import { initDb, closeDb } from "./db-setup.ts";
 import { adminRoutes } from "./routes/admin/admin-routes.ts";
+import { customerRoutes } from "./routes/customer/customer-routes.ts";
 import z from "zod";
 
 const app = express();
@@ -10,6 +11,7 @@ initDb();
 
 app.use(express.json());
 app.use("/admin", adminRoutes);
+app.use("/customer", customerRoutes);
 
 app.use(
     (
