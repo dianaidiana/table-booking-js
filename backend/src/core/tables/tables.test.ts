@@ -12,6 +12,7 @@ import {
 import { tableGroupsFactory } from "../../test-factories/table-groups.factory.ts";
 import { bookingsFactory } from "../../test-factories/bookings.factory.ts";
 import { getMinutesFrom00hs } from "../../utils.ts";
+import { NotFoundError } from "../../errors.ts";
 
 describe("tables", () => {
     describe("service", () => {
@@ -36,8 +37,7 @@ describe("tables", () => {
         });
 
         test("get by unexistent id", () => {
-            const undefinedTable = getTable(10000);
-            expect(undefinedTable).toBeUndefined();
+            expect(() => getTable(10000)).toThrow(NotFoundError);
         });
 
         test("create", () => {
@@ -175,8 +175,7 @@ describe("tables", () => {
 
         test("delete without bookings", () => {
             const table = tablesFactory.create();
-            const result = deleteTable(table.id);
-            expect(result).toBe(true);
+            expect(() => deleteTable(table.id)).not.toThrow();
         });
 
         test("delete with past bookings", () => {
@@ -188,8 +187,7 @@ describe("tables", () => {
                     .toString(),
             });
 
-            const result = deleteTable(table.id);
-            expect(result).toBe(true);
+            expect(() => deleteTable(table.id)).not.toThrow();
         });
 
         test("delete with past bookings today", () => {
@@ -202,8 +200,7 @@ describe("tables", () => {
                     getMinutesFrom00hs(Temporal.Now.plainTimeISO()) - 5,
             });
 
-            const result = deleteTable(table.id);
-            expect(result).toBe(true);
+            expect(() => deleteTable(table.id)).not.toThrow();
         });
 
         test("delete with future bookings", () => {

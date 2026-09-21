@@ -13,13 +13,19 @@ import {
 import { dbGetTable } from "../tables/tables.dba.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
+import { ConflictError, NotFoundError } from "../../errors.ts";
+import { bookingMessages } from "../../error-messages.ts";
 
 export function listBookings(filters: BookingsFilters): Booking[] {
     return dbListBookings(filters);
 }
 
-export function getBooking(id: number): Booking | undefined {
-    return dbGetBookingById(id);
+export function getBooking(id: number): Booking {
+    const booking = dbGetBookingById(id);
+    if (!booking) {
+        throw new NotFoundError(bookingMessages.notFound(id));
+    }
+    return booking;
 }
 
 export function createBooking(createBooking: CreateBooking): Booking {
@@ -33,7 +39,7 @@ export function createBooking(createBooking: CreateBooking): Booking {
     });
 
     if (!canBook) {
-        throw new Error("Failed to create booking: table not available");
+        throw new ConflictError(bookingMessages.tableNotAvailable());
     }
 
     const bookingSecret = uuidv4().toString();
@@ -52,7 +58,7 @@ export function updateBooking(
     ) {
         const currentBooking = dbGetBookingById(id);
         if (!currentBooking) {
-            throw new Error("Failed to update booking");
+            throw new NotFoundError(bookingMessages.notFound(id));
         }
 
         const hardRequirements = {
@@ -71,7 +77,7 @@ export function updateBooking(
         const canBook = canBookTable(hardRequirements, id);
 
         if (!canBook) {
-            throw new Error("Failed to update booking: table not available");
+            throw new ConflictError(bookingMessages.tableNotAvailable());
         }
     }
 

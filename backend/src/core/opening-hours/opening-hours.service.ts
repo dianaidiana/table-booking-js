@@ -1,4 +1,6 @@
 import { dbListBookings } from "../bookings/bookings.dba.ts";
+import { ConflictError, NotFoundError } from "../../errors.ts";
+import { openingHoursMessages } from "../../error-messages.ts";
 import {
     dbGetOpeningHoursByDay,
     dbListOpeningHours,
@@ -11,10 +13,12 @@ export function listOpeningHours(): OpeningHours[] {
     return dbListOpeningHours();
 }
 
-export function getOpeningHoursByDay(
-    weekday: number,
-): OpeningHours | undefined {
-    return dbGetOpeningHoursByDay(weekday);
+export function getOpeningHoursByDay(weekday: number): OpeningHours {
+    const openingHours = dbGetOpeningHoursByDay(weekday);
+    if (!openingHours) {
+        throw new NotFoundError(openingHoursMessages.notFound(weekday));
+    }
+    return openingHours;
 }
 
 export function updateOpeningHours(
@@ -32,8 +36,8 @@ export function updateOpeningHours(
                 (b) => b.booking_start_time < newOpeningTime,
             );
             if (conflictingBookingsAtOpening) {
-                throw new Error(
-                    "Failed to update opening houres: conflicting bookings",
+                throw new ConflictError(
+                    openingHoursMessages.conflictingBookings(),
                 );
             }
         }
@@ -45,16 +49,14 @@ export function updateOpeningHours(
                     b.booking_start_time + b.duration_minutes > newClosingTime,
             );
             if (conflictingBookingsAtClosing) {
-                throw new Error(
-                    "Failed to update opening houres: conflicting bookings",
+                throw new ConflictError(
+                    openingHoursMessages.conflictingBookings(),
                 );
             }
         }
 
         if (updateOpeningHours.is_closed === true) {
-            throw new Error(
-                "Failed to update opening houres: conflicting bookings",
-            );
+            throw new ConflictError(openingHoursMessages.conflictingBookings());
         }
     }
 

@@ -51,11 +51,6 @@ export function getBookingController(
     const { id } = getBookingParamsSchema.parse(req.params);
 
     const booking = getBooking(id);
-    if (!booking) {
-        res.status(404).json({ error: "not found" });
-        return;
-    }
-
     res.status(200).json(booking);
 }
 

@@ -12,6 +12,7 @@ import { getMinutesFrom00hs } from "../../utils.ts";
 import { deleteTable, updateTable } from "../tables/tables.service.ts";
 import { updateOpeningHours } from "../opening-hours/opening-hours.service.ts";
 import { validate as uuidValidate } from "uuid";
+import { ConflictError, NotFoundError } from "../../errors.ts";
 
 describe("bookings", () => {
     describe("service", () => {
@@ -495,8 +496,7 @@ describe("bookings", () => {
         });
 
         test("get by unexistant id", () => {
-            const undefinedBooking = getBooking(1000);
-            expect(undefinedBooking).toBeUndefined();
+            expect(() => getBooking(1000)).toThrow(NotFoundError);
         });
 
         describe("create", () => {
@@ -569,8 +569,7 @@ describe("bookings", () => {
 
             test("with table deleted", () => {
                 const table = tablesFactory.create();
-                const result = deleteTable(table.id);
-                expect(result).toBe(true);
+                expect(() => deleteTable(table.id)).not.toThrow();
                 expect(() => {
                     createBooking({
                         table_id: table.id,
@@ -778,7 +777,7 @@ describe("bookings", () => {
             test("unexistent booking", () => {
                 expect(() => {
                     updateBooking(10000, { duration_minutes: 60 });
-                }).toThrow();
+                }).toThrow(NotFoundError);
             });
 
             test("to unexistent table_id", () => {
@@ -787,7 +786,7 @@ describe("bookings", () => {
                     updateBooking(booking.id, {
                         table_id: 1000,
                     });
-                }).toThrow();
+                }).toThrow(ConflictError);
             });
 
             test("to disabled table", () => {
@@ -823,8 +822,7 @@ describe("bookings", () => {
 
             test("with table deleted", () => {
                 const tables = tablesFactory.createMany(2);
-                const result = deleteTable(tables[0]!.id);
-                expect(result).toBe(true);
+                expect(() => deleteTable(tables[0]!.id)).not.toThrow();
                 const booking = bookingsFactory.create({
                     table_id: tables[1]!.id,
                 });

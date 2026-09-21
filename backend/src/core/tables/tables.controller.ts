@@ -31,10 +31,6 @@ export function getTableController(
     const { id } = getTableParamsSchema.parse(req.params);
 
     const table = getTable(id);
-    if (!table) {
-        res.status(404).json({ error: "not found" });
-    }
-
     res.status(200).json(table);
 }
 
@@ -89,11 +85,6 @@ export function deleteTableController(
     res: express.Response,
 ) {
     const { id } = deleteTableParamsSchema.parse(req.params);
-    const isDeleted = deleteTable(id);
-
-    if (isDeleted) {
-        res.status(204).end();
-    } else {
-        res.status(404).json({ error: "not found" });
-    }
+    deleteTable(id);
+    res.status(204).end();
 }

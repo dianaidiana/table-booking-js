@@ -1,5 +1,7 @@
 import { getMinutesFrom00hs } from "../../utils.ts";
 import { dbExistsBookings } from "../bookings/bookings.dba.ts";
+import { ConflictError, NotFoundError } from "../../errors.ts";
+import { tableMessages } from "../../error-messages.ts";
 import {
     dbCreateTable,
     dbDeleteTable,
@@ -15,18 +17,22 @@ export function listTables(): Table[] {
     return dbListTables();
 }
 
-export function getTable(id: number): Table | undefined {
-    return dbGetTable(id);
+export function getTable(id: number): Table {
+    const table = dbGetTable(id);
+    if (!table) {
+        throw new NotFoundError(tableMessages.notFound(id));
+    }
+    return table;
 }
 
 export function createTable(createTable: CreateTable): Table {
     return dbCreateTable(createTable);
 }
 
-export class TableHasBookingsUpdateError extends Error {
+export class TableHasBookingsUpdateError extends ConflictError {
     public id;
     constructor(id: number) {
-        super(`Failed to update table ${id}; it has associated bookings`);
+        super(tableMessages.hasBookings(id));
         this.id = id;
     }
 }
@@ -46,7 +52,7 @@ export function updateTable(id: number, updateTable: UpdateTable): Table {
     return dbUpdateTable(id, updateTable);
 }
 
-export function deleteTable(id: number): Boolean {
+export function deleteTable(id: number): void {
     if (
         dbExistsBookings({
             tableId: id,
@@ -57,5 +63,8 @@ export function deleteTable(id: number): Boolean {
         throw new TableHasBookingsUpdateError(id);
     }
 
-    return dbDeleteTable(id);
+    const wasDeleted = dbDeleteTable(id);
+    if (!wasDeleted) {
+        throw new NotFoundError(tableMessages.notFound(id));
+    }
 }

@@ -29,10 +29,6 @@ export function getOpeningHoursPerDayController(
     const { weekday } = getOpeningHoursParamsSchema.parse(req.params);
 
     const openingHours = getOpeningHoursByDay(weekday);
-    if (!openingHours) {
-        res.status(404).json({ error: "not found" });
-    }
-
     res.status(200).json(openingHours);
 }
 

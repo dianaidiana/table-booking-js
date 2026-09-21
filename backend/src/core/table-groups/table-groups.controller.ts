@@ -1,8 +1,5 @@
 import express from "express";
-import {
-    TableGroupHasTablesDeleteError,
-    type CreateTableGroup,
-} from "./table-groups.dba.ts";
+import type { CreateTableGroup } from "./table-groups.dba.ts";
 import z from "zod";
 import {
     createTableGroup,
@@ -34,10 +31,6 @@ export function getTableGroupController(
     const { id } = getTableGroupParamsSchema.parse(req.params);
 
     const tableGroup = getTableGroup(id);
-    if (!tableGroup) {
-        res.status(404).json({ error: "not found" });
-    }
-
     res.status(200).json(tableGroup);
 }
 
@@ -91,17 +84,6 @@ export function deleteTableGroupController(
     res: express.Response,
 ) {
     const { id } = deleteTableGroupParamsSchema.parse(req.params);
-    try {
-        const isDeleted = deleteTableGroup(id);
-        if (isDeleted) {
-            res.status(204).end();
-        } else {
-            res.status(404).json({ error: "not found" });
-        }
-    } catch (e) {
-        if (e instanceof TableGroupHasTablesDeleteError) {
-            return res.status(409).json({ error: "group has tables" });
-        }
-        throw e;
-    }
+    deleteTableGroup(id);
+    res.status(204).end();
 }

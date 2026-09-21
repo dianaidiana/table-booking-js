@@ -1,6 +1,8 @@
 import { getDb } from "../../db-setup.ts";
 import type { PartialWithUndefined } from "../../types-utils.ts";
 import { dbPatchHelper } from "../../db-utils.ts";
+import { ConflictError } from "../../errors.ts";
+import { tableGroupMessages } from "../../error-messages.ts";
 import db, { SqliteError } from "better-sqlite3";
 
 export interface TableGroup {
@@ -66,10 +68,10 @@ export function dbUpdateTableGroup(
     );
 }
 
-export class TableGroupHasTablesDeleteError extends Error {
+export class TableGroupHasTablesDeleteError extends ConflictError {
     public id;
     constructor(id: number) {
-        super(`Failed to delete table group ${id}; it has associated tables`);
+        super(tableGroupMessages.hasTables(id));
         this.id = id;
     }
 }

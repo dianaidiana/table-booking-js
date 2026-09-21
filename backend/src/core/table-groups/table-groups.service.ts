@@ -1,5 +1,6 @@
-import { error } from "node:console";
 import { dbListTables } from "../tables/tables.dba.ts";
+import { NotFoundError } from "../../errors.ts";
+import { tableGroupMessages } from "../../error-messages.ts";
 import {
     dbCreateTableGroup,
     dbDeleteTableGroup,
@@ -15,8 +16,12 @@ export function listTableGroups(): TableGroup[] {
     return dbListTableGroups();
 }
 
-export function getTableGroup(id: number): TableGroup | undefined {
-    return dbGetTableGroup(id);
+export function getTableGroup(id: number): TableGroup {
+    const tableGroup = dbGetTableGroup(id);
+    if (!tableGroup) {
+        throw new NotFoundError(tableGroupMessages.notFound(id));
+    }
+    return tableGroup;
 }
 
 export function createTableGroup({ name }: CreateTableGroup): TableGroup {
@@ -30,6 +35,9 @@ export function updateTableGroup(
     return dbUpdateTableGroup(id, { name });
 }
 
-export function deleteTableGroup(id: number): boolean {
-    return dbDeleteTableGroup(id);
+export function deleteTableGroup(id: number): void {
+    const wasDeleted = dbDeleteTableGroup(id);
+    if (!wasDeleted) {
+        throw new NotFoundError(tableGroupMessages.notFound(id));
+    }
 }

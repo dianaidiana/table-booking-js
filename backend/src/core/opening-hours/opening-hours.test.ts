@@ -7,6 +7,7 @@ import {
 } from "./opening-hours.service.ts";
 import { bookingsFactory } from "../../test-factories/bookings.factory.ts";
 import { getMinutesFrom00hs } from "../../utils.ts";
+import { ConflictError, NotFoundError } from "../../errors.ts";
 
 describe("opening hours", () => {
     describe("service", () => {
@@ -32,8 +33,7 @@ describe("opening hours", () => {
                 is_closed: false,
             });
 
-            const nonexistantOpeningHours = getOpeningHoursByDay(7); // Invalid weekday
-            expect(nonexistantOpeningHours).toBeUndefined();
+            expect(() => getOpeningHoursByDay(7)).toThrow(NotFoundError); // Invalid weekday
         });
 
         test("update", () => {
@@ -75,7 +75,7 @@ describe("opening hours", () => {
                 updateOpeningHours(openingHours.weekday, {
                     is_closed: true,
                 });
-            }).toThrow();
+            }).toThrow(ConflictError);
         });
 
         test("update openingTime with upcoming bookings conflicting", () => {
@@ -96,7 +96,7 @@ describe("opening hours", () => {
                         new Temporal.PlainTime(12, 0),
                     ),
                 });
-            }).toThrow();
+            }).toThrow(ConflictError);
         });
 
         test("update to closingTime with upcoming bookings conflicting", () => {
@@ -117,7 +117,7 @@ describe("opening hours", () => {
                         new Temporal.PlainTime(12, 0),
                     ),
                 });
-            }).toThrow();
+            }).toThrow(ConflictError);
         });
     });
 });

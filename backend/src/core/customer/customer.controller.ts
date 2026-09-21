@@ -70,12 +70,6 @@ export function getBookingDetailsController(
 ) {
     const { bookingSecret } = getBookingDetailsParamsSchema.parse(req.params);
     const booking = getBookingDetails(bookingSecret);
-
-    if (!booking) {
-        res.status(404).json({ error: "not found" });
-        return;
-    }
-
     res.status(200).json(booking);
 }
 

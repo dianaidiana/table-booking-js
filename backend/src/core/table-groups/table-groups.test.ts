@@ -10,6 +10,7 @@ import {
 import { tableGroupsFactory } from "../../test-factories/table-groups.factory.ts";
 import { tablesFactory } from "../../test-factories/tables.factory.ts";
 import { TableGroupHasTablesDeleteError } from "./table-groups.dba.ts";
+import { NotFoundError } from "../../errors.ts";
 
 describe("table-groups", () => {
     describe("service", () => {
@@ -34,8 +35,7 @@ describe("table-groups", () => {
         });
 
         test("get by unexistent id", () => {
-            const undefinedTableGroup = getTableGroup(10000);
-            expect(undefinedTableGroup).toBeUndefined();
+            expect(() => getTableGroup(10000)).toThrow(NotFoundError);
         });
 
         test("create", () => {
@@ -65,7 +65,7 @@ describe("table-groups", () => {
                 updateTableGroup(1, {
                     name: "asd",
                 });
-            }).toThrow();
+            }).toThrow(NotFoundError);
         });
 
         test("update empty", () => {
@@ -86,8 +86,7 @@ describe("table-groups", () => {
 
         test("delete without table", () => {
             const tableGroup = tableGroupsFactory.create();
-            const result = deleteTableGroup(tableGroup.id);
-            expect(result).toBe(true);
+            expect(() => deleteTableGroup(tableGroup.id)).not.toThrow();
         });
     });
 });

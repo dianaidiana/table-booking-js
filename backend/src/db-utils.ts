@@ -3,6 +3,8 @@ import type {
     OptionalToUndefined,
     PartialWithUndefined,
 } from "./types-utils.ts";
+import { NotFoundError } from "./errors.ts";
+import { sharedMessages } from "./error-messages.ts";
 
 export interface TableInfo<OutT> {
     primaryKey: string;
@@ -29,7 +31,9 @@ export function dbPatchHelper<UpdateT extends object, OutT>(
     );
     const out = stmt.get(...values, id);
     if (!out) {
-        throw new Error(`Failed to update ${tableInfo.tableName}`);
+        throw new NotFoundError(
+            sharedMessages.updateTargetNotFound(tableInfo.tableName, id),
+        );
     }
 
     return out;

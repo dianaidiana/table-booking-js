@@ -2,6 +2,7 @@ import express from "express";
 import { initDb, closeDb } from "./db-setup.ts";
 import { adminRoutes } from "./routes/admin/admin-routes.ts";
 import { customerRoutes } from "./routes/customer/customer-routes.ts";
+import { AppError } from "./errors.ts";
 import z from "zod";
 
 const app = express();
@@ -28,6 +29,10 @@ app.use(
             return res
                 .status(400)
                 .json({ error: "Invalid input", issues: err.issues });
+        }
+
+        if (err instanceof AppError) {
+            return res.status(err.statusCode).json({ error: err.message });
         }
 
         console.error(err);

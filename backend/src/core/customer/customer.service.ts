@@ -8,6 +8,8 @@ import {
 import { createBooking } from "../bookings/bookings.service.ts";
 import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
+import { ConflictError, NotFoundError } from "../../errors.ts";
+import { customerBookingMessages } from "../../error-messages.ts";
 import {
     dbGetTableBookingRows,
     type TableBookingRow,
@@ -167,7 +169,7 @@ export function completeBooking(bookingRequest: BookingRequest): Booking {
     );
 
     if (!tableId) {
-        throw new Error("Failed to create booking: no available table found");
+        throw new ConflictError(customerBookingMessages.noAvailableTable());
     }
 
     const booking = createBooking({
@@ -181,19 +183,27 @@ export function completeBooking(bookingRequest: BookingRequest): Booking {
     return booking;
 }
 
-export function getBookingDetails(bookingSecret: string): Booking | undefined {
-    return dbGetBookingByBookingSecret(bookingSecret);
+export function getBookingDetails(bookingSecret: string): Booking {
+    const booking = dbGetBookingByBookingSecret(bookingSecret);
+    if (!booking) {
+        throw new NotFoundError(
+            customerBookingMessages.notFoundBySecret(bookingSecret),
+        );
+    }
+    return booking;
 }
 
 export function confirmBooking(bookingSecret: string): Booking {
     const booking = dbGetBookingByBookingSecret(bookingSecret);
     if (!booking) {
-        throw new Error("Failed to confirm booking: booking not found");
+        throw new NotFoundError(
+            customerBookingMessages.notFoundBySecret(bookingSecret),
+        );
     }
 
     const status = booking.status;
     if (status == "CANCELLED") {
-        throw new Error("Unable to confirm booking: booking is cancelled");
+        throw new ConflictError(customerBookingMessages.alreadyCancelled());
     }
 
     if (status != "CONFIRMED") {
@@ -206,7 +216,9 @@ export function confirmBooking(bookingSecret: string): Booking {
 export function cancelBooking(bookingSecret: string): Booking {
     const booking = dbGetBookingByBookingSecret(bookingSecret);
     if (!booking) {
-        throw new Error("Failed to cancel booking: booking not found");
+        throw new NotFoundError(
+            customerBookingMessages.notFoundBySecret(bookingSecret),
+        );
     }
 
     const status = booking.status;
