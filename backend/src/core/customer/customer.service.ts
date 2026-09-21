@@ -10,6 +10,7 @@ import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 import { ConflictError, NotFoundError } from "../../errors.ts";
 import { customerBookingMessages } from "../../error-messages.ts";
+import { withTransaction } from "../../db-utils.ts";
 import {
     dbGetTableBookingRows,
     type TableBookingRow,
@@ -159,26 +160,28 @@ export interface BookingRequest extends Omit<
 }
 
 export function completeBooking(bookingRequest: BookingRequest): Booking {
-    const tableId = assignTableId(
-        {
-            date: bookingRequest.booking_date,
-            pax: bookingRequest.pax,
-        },
-        bookingRequest.tableGroupId,
-        bookingRequest.booking_start_time,
-    );
+    const booking = withTransaction(() => {
+        const tableId = assignTableId(
+            {
+                date: bookingRequest.booking_date,
+                pax: bookingRequest.pax,
+            },
+            bookingRequest.tableGroupId,
+            bookingRequest.booking_start_time,
+        );
 
-    if (!tableId) {
-        throw new ConflictError(customerBookingMessages.noAvailableTable());
-    }
+        if (!tableId) {
+            throw new ConflictError(customerBookingMessages.noAvailableTable());
+        }
 
-    const booking = createBooking({
-        ...bookingRequest,
-        table_id: tableId,
-        status: "PENDING",
+        return createBooking({
+            ...bookingRequest,
+            table_id: tableId,
+            status: "PENDING",
+        });
     });
 
-    sendEmail(booking).catch((error) => console.error({ error }));
+   sendEmail(booking).catch((error) => console.error({ error }));
 
     return booking;
 }

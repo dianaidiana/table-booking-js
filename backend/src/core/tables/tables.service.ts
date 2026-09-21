@@ -2,6 +2,7 @@ import { getMinutesFrom00hs } from "../../utils.ts";
 import { dbExistsBookings } from "../bookings/bookings.dba.ts";
 import { ConflictError, NotFoundError } from "../../errors.ts";
 import { tableMessages } from "../../error-messages.ts";
+import { withTransaction } from "../../db-utils.ts";
 import {
     dbCreateTable,
     dbDeleteTable,
@@ -38,7 +39,24 @@ export class TableHasBookingsUpdateError extends ConflictError {
 }
 
 export function updateTable(id: number, updateTable: UpdateTable): Table {
-    if (updateTable.disabled) {
+    return withTransaction(() => {
+        if (updateTable.disabled) {
+            if (
+                dbExistsBookings({
+                    tableId: id,
+                    startDate: Temporal.Now.plainDateISO().toString(),
+                    startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
+                })
+            ) {
+                throw new TableHasBookingsUpdateError(id);
+            }
+        }
+        return dbUpdateTable(id, updateTable);
+    });
+}
+
+export function deleteTable(id: number): void {
+    withTransaction(() => {
         if (
             dbExistsBookings({
                 tableId: id,
@@ -48,23 +66,10 @@ export function updateTable(id: number, updateTable: UpdateTable): Table {
         ) {
             throw new TableHasBookingsUpdateError(id);
         }
-    }
-    return dbUpdateTable(id, updateTable);
-}
 
-export function deleteTable(id: number): void {
-    if (
-        dbExistsBookings({
-            tableId: id,
-            startDate: Temporal.Now.plainDateISO().toString(),
-            startTime: getMinutesFrom00hs(Temporal.Now.plainTimeISO()),
-        })
-    ) {
-        throw new TableHasBookingsUpdateError(id);
-    }
-
-    const wasDeleted = dbDeleteTable(id);
-    if (!wasDeleted) {
-        throw new NotFoundError(tableMessages.notFound(id));
-    }
+        const wasDeleted = dbDeleteTable(id);
+        if (!wasDeleted) {
+            throw new NotFoundError(tableMessages.notFound(id));
+        }
+    });
 }

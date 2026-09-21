@@ -6,19 +6,20 @@ let database: db.Database | null = null;
 
 export function initDb(testing: boolean = false): db.Database {
     try {
-        const dbExists = !testing && fs.existsSync("./database.db");
         database = new db(testing ? ":memory:" : "./database.db");
 
         database.pragma("journal_mode = WAL");
         database.pragma("synchronous = normal");
 
         // Only apply schema and create settings and opening hours on first creation
-        if (!dbExists) {
+        if (isEmptyDatabase(database)) {
             const schema = fs.readFileSync("./database/schema.sql", "utf-8");
-            database.exec(schema);
 
-            createSettings(database);
-            createOpeningHours(database);
+            database.transaction(() => {
+                database!.exec(schema);
+                createSettings(database!);
+                createOpeningHours(database!);
+            })();
             console.log("Schema applied to fresh database.");
         }
 
@@ -43,6 +44,16 @@ export function closeDb(): void {
         database = null;
         console.log("Database connection closed.");
     }
+}
+
+function isEmptyDatabase(db: db.Database): boolean {
+    const row = db
+        .prepare<
+            [],
+            { count: number }
+        >("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+        .get();
+    return row!.count === 0;
 }
 
 function createSettings(db: db.Database): void {

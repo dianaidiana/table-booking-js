@@ -15,6 +15,7 @@ import { dbGetOpeningHoursByDay } from "../opening-hours/opening-hours.dba.ts";
 import { dbGetSettings } from "../settings/settings.dba.ts";
 import { ConflictError, NotFoundError } from "../../errors.ts";
 import { bookingMessages } from "../../error-messages.ts";
+import { withTransaction } from "../../db-utils.ts";
 
 export function listBookings(filters: BookingsFilters): Booking[] {
     return dbListBookings(filters);
@@ -29,59 +30,64 @@ export function getBooking(id: number): Booking {
 }
 
 export function createBooking(createBooking: CreateBooking): Booking {
-    const canBook = canBookTable({
-        table_id: createBooking.table_id,
-        booking_date: createBooking.booking_date,
-        duration_minutes:
-            createBooking.duration_minutes ?? dbGetSettings().booking_duration,
-        booking_start_time: createBooking.booking_start_time,
-        pax: createBooking.pax,
+    return withTransaction(() => {
+        const canBook = canBookTable({
+            table_id: createBooking.table_id,
+            booking_date: createBooking.booking_date,
+            duration_minutes:
+                createBooking.duration_minutes ??
+                dbGetSettings().booking_duration,
+            booking_start_time: createBooking.booking_start_time,
+            pax: createBooking.pax,
+        });
+
+        if (!canBook) {
+            throw new ConflictError(bookingMessages.tableNotAvailable());
+        }
+
+        const bookingSecret = uuidv4().toString();
+        return dbCreateBooking(createBooking, bookingSecret);
     });
-
-    if (!canBook) {
-        throw new ConflictError(bookingMessages.tableNotAvailable());
-    }
-
-    const bookingSecret = uuidv4().toString();
-    return dbCreateBooking(createBooking, bookingSecret);
 }
 
 export function updateBooking(
     id: number,
     updateBooking: UpdateBooking,
 ): Booking {
-    if (
-        updateBooking.table_id ||
-        updateBooking.booking_date ||
-        updateBooking.booking_start_time ||
-        updateBooking.duration_minutes
-    ) {
-        const currentBooking = dbGetBookingById(id);
-        if (!currentBooking) {
-            throw new NotFoundError(bookingMessages.notFound(id));
+    return withTransaction(() => {
+        if (
+            updateBooking.table_id ||
+            updateBooking.booking_date ||
+            updateBooking.booking_start_time ||
+            updateBooking.duration_minutes
+        ) {
+            const currentBooking = dbGetBookingById(id);
+            if (!currentBooking) {
+                throw new NotFoundError(bookingMessages.notFound(id));
+            }
+
+            const hardRequirements = {
+                table_id: updateBooking.table_id ?? currentBooking.table_id,
+                booking_date:
+                    updateBooking.booking_date ?? currentBooking.booking_date,
+                duration_minutes:
+                    updateBooking.duration_minutes ??
+                    currentBooking.duration_minutes,
+                booking_start_time:
+                    updateBooking.booking_start_time ??
+                    currentBooking.booking_start_time,
+                pax: updateBooking.pax ?? currentBooking.pax,
+            };
+
+            const canBook = canBookTable(hardRequirements, id);
+
+            if (!canBook) {
+                throw new ConflictError(bookingMessages.tableNotAvailable());
+            }
         }
 
-        const hardRequirements = {
-            table_id: updateBooking.table_id ?? currentBooking.table_id,
-            booking_date:
-                updateBooking.booking_date ?? currentBooking.booking_date,
-            duration_minutes:
-                updateBooking.duration_minutes ??
-                currentBooking.duration_minutes,
-            booking_start_time:
-                updateBooking.booking_start_time ??
-                currentBooking.booking_start_time,
-            pax: updateBooking.pax ?? currentBooking.pax,
-        };
-
-        const canBook = canBookTable(hardRequirements, id);
-
-        if (!canBook) {
-            throw new ConflictError(bookingMessages.tableNotAvailable());
-        }
-    }
-
-    return dbUpdateBooking(id, updateBooking);
+        return dbUpdateBooking(id, updateBooking);
+    });
 }
 
 interface HardRequirements {

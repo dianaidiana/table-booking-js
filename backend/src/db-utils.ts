@@ -5,6 +5,11 @@ import type {
 } from "./types-utils.ts";
 import { NotFoundError } from "./errors.ts";
 import { sharedMessages } from "./error-messages.ts";
+import { getDb } from "./db-setup.ts";
+
+export function withTransaction<T>(fn: () => T): T {
+    return getDb().transaction(fn).immediate();
+}
 
 export interface TableInfo<OutT> {
     primaryKey: string;
