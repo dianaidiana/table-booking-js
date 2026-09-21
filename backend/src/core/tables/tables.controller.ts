@@ -53,7 +53,7 @@ export function createTableController(
 
     const table = createTable(body);
 
-    res.status(200).json(table);
+    res.status(201).json(table);
 }
 
 const updateTableBodySchema = createTableBodySchema.partial();

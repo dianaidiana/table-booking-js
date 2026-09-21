@@ -55,7 +55,7 @@ export function completeBookingController(
 ) {
     const body = completeBookingBodyShema.parse(req.body);
     const booking = completeBooking(body);
-    res.status(200).json(booking);
+    res.status(201).json(booking);
 }
 
 const getBookingDetailsParamsSchema = z

@@ -82,7 +82,7 @@ export function createBookingController(
 
     const booking = createBooking(body);
 
-    res.status(200).json(booking);
+    res.status(201).json(booking);
 }
 
 const updateBookingBodySchema = createBookingBodySchema.partial();

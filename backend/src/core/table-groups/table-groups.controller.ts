@@ -52,7 +52,7 @@ export function createTableGroupController(
 
     const tableGroup = createTableGroup(body);
 
-    res.status(200).json(tableGroup);
+    res.status(201).json(tableGroup);
 }
 
 const updateTableGroupBodySchema = createTableGroupBodySchema.partial();
