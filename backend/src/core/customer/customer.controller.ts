@@ -41,7 +41,7 @@ const completeBookingBodyShema = z
         guest_email: z.email(),
         guest_phone: z.e164(),
         special_requests: z.string().nonempty().optional(),
-        tableGroupId: z.number().positive(),
+        table_group_id: z.number().positive(),
     })
     .strict();
 

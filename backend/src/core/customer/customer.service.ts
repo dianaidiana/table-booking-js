@@ -156,18 +156,20 @@ export interface BookingRequest extends Omit<
     CreateBooking,
     "table_id" | "duration_minutes" | "status"
 > {
-    tableGroupId: number;
+    table_group_id: number;
 }
 
 export function completeBooking(bookingRequest: BookingRequest): Booking {
+    const { table_group_id: tableGroupId, ...bookingData } = bookingRequest;
+
     const booking = withTransaction(() => {
         const tableId = assignTableId(
             {
-                date: bookingRequest.booking_date,
-                pax: bookingRequest.pax,
+                date: bookingData.booking_date,
+                pax: bookingData.pax,
             },
-            bookingRequest.tableGroupId,
-            bookingRequest.booking_start_time,
+            tableGroupId,
+            bookingData.booking_start_time,
         );
 
         if (!tableId) {
@@ -175,13 +177,13 @@ export function completeBooking(bookingRequest: BookingRequest): Booking {
         }
 
         return createBooking({
-            ...bookingRequest,
+            ...bookingData,
             table_id: tableId,
             status: "PENDING",
         });
     });
 
-   sendEmail(booking).catch((error) => console.error({ error }));
+    sendEmail(booking).catch((error) => console.error({ error }));
 
     return booking;
 }
