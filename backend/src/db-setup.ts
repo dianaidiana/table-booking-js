@@ -1,5 +1,6 @@
 import db from "better-sqlite3";
 import fs from "fs";
+import { getMinutesFrom00hs } from "./utils.ts";
 
 let database: db.Database | null = null;
 
@@ -52,16 +53,19 @@ function createSettings(db: db.Database): void {
 }
 
 function createOpeningHours(db: db.Database): void {
+    const openingTime = getMinutesFrom00hs(new Temporal.PlainTime(9, 0));
+    const closingTime = getMinutesFrom00hs(new Temporal.PlainTime(22, 0));
+
     const stmt = db.prepare(
         `INSERT INTO opening_hours (weekday, opening_time, closing_time, is_closed) VALUES
-      (0, '09:00', '22:00', 0), 
-      (1, '09:00', '22:00', 0),
-      (2, '09:00', '22:00', 0),
-      (3, '09:00', '22:00', 0),
-      (4, '09:00', '22:00', 0),
-      (5, '09:00', '22:00', 0),
-      (6, '09:00', '22:00', 0);
+      (0, @openingTime, @closingTime, 0),
+      (1, @openingTime, @closingTime, 0),
+      (2, @openingTime, @closingTime, 0),
+      (3, @openingTime, @closingTime, 0),
+      (4, @openingTime, @closingTime, 0),
+      (5, @openingTime, @closingTime, 0),
+      (6, @openingTime, @closingTime, 0);
     `,
     );
-    stmt.run();
+    stmt.run({ openingTime, closingTime });
 }

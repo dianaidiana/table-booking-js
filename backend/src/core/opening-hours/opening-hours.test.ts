@@ -28,8 +28,8 @@ describe("opening hours", () => {
             const openingHours = getOpeningHoursByDay(0); // Sunday
             expect(openingHours).toStrictEqual({
                 weekday: 0,
-                opening_time: "09:00",
-                closing_time: "22:00",
+                opening_time: 540,
+                closing_time: 1320,
                 is_closed: false,
             });
 
