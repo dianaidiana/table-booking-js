@@ -9,38 +9,38 @@ import {
     updateBooking,
 } from "./bookings.service.ts";
 
-const filterBookingsBodySchema = z
+const filterBookingsQuerySchema = z
     .object({
         specificDate: z.iso.date(),
         startDate: z.iso.date(),
         endDate: z.iso.date(),
-        weekday: z.number().max(6).min(0),
-        startTime: z.number().positive(),
-        endTime: z.number().positive(),
-        includeCancelled: z.boolean(),
-        tableId: z.number().positive(),
+        weekday: z.coerce.number().max(6).min(0),
+        startTime: z.coerce.number().positive(),
+        endTime: z.coerce.number().positive(),
+        includeCancelled: z.stringbool(),
+        tableId: z.coerce.number().positive(),
         guestEmail: z.email(),
-        exclude: z.number().positive(),
+        exclude: z.coerce.number().positive(),
     })
     .strict()
     .partial();
 
 type CheckFilters = Assert<
-    Equal<z.infer<typeof filterBookingsBodySchema>, BookingsFilters>
+    Equal<z.infer<typeof filterBookingsQuerySchema>, BookingsFilters>
 >;
 
 export function listBookingsController(
     req: express.Request,
     res: express.Response,
 ) {
-    const filters = filterBookingsBodySchema.parse(req.query);
+    const filters = filterBookingsQuerySchema.parse(req.query);
     const bookings = listBookings(filters);
     res.status(200).json(bookings);
 }
 
 const getBookingParamsSchema = z
     .object({
-        id: z.number().positive(),
+        id: z.coerce.number().positive(),
     })
     .strict();
 
